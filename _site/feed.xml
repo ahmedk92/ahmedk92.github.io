@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Blog</title>
+    <description></description>
+    <link>http://localhost:4000/</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Sat, 04 Nov 2017 11:04:45 +0200</pubDate>
+    <lastBuildDate>Sat, 04 Nov 2017 11:04:45 +0200</lastBuildDate>
+    <generator>Jekyll v3.6.2</generator>
+    
+      <item>
+        <title>WKWebView Horizontal Paging</title>
+        <description>&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;UIWebView&lt;/code&gt; had a helpful property named &lt;code class=&quot;highlighter-rouge&quot;&gt;paginationMode&lt;/code&gt;. It gave you horizontal pagination out of the box; specifically using the values: &lt;code class=&quot;highlighter-rouge&quot;&gt;leftToRight&lt;/code&gt;, and &lt;code class=&quot;highlighter-rouge&quot;&gt;rightToLeft&lt;/code&gt;. However, &lt;code class=&quot;highlighter-rouge&quot;&gt;UIWebView&lt;/code&gt; is going out of favor, and since iOS 8, Apple officially encourages using &lt;code class=&quot;highlighter-rouge&quot;&gt;WKWebView&lt;/code&gt;. Unfortunately, &lt;code class=&quot;highlighter-rouge&quot;&gt;WKWebView&lt;/code&gt; doesn’t have that property nor its equivalent out of the box.&lt;/p&gt;
+
+&lt;p&gt;Thankfully, horizontal pagination (left and right) is doable using CSS. CSS has a helpful property called &lt;code class=&quot;highlighter-rouge&quot;&gt;column-width&lt;/code&gt;. Using that results in segmenting the html body into columns of the specified width. So, the idea is as follows:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Set the &lt;code class=&quot;highlighter-rouge&quot;&gt;column-width&lt;/code&gt; property of the body to the webview’s width.&lt;/li&gt;
+  &lt;li&gt;Set the &lt;code class=&quot;highlighter-rouge&quot;&gt;height&lt;/code&gt; property of the body to the webview’s height.&lt;/li&gt;
+  &lt;li&gt;Set &lt;code class=&quot;highlighter-rouge&quot;&gt;isPagingEnabled&lt;/code&gt; of the webview’s &lt;code class=&quot;highlighter-rouge&quot;&gt;scrollView&lt;/code&gt; to true.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;That’s it (for left to right content though). It’s up to you where to set the above values. For example, you can do it in &lt;code class=&quot;highlighter-rouge&quot;&gt;webView(_:didFinish:)&lt;/code&gt; of the webview’s &lt;code class=&quot;highlighter-rouge&quot;&gt;navigationDelegate&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;now-rtl-support&quot;&gt;Now, RTL support.&lt;/h3&gt;
+
+&lt;p&gt;It’s as simple as setting the &lt;code class=&quot;highlighter-rouge&quot;&gt;direction&lt;/code&gt; style property of the html tag to &lt;code class=&quot;highlighter-rouge&quot;&gt;rtl&lt;/code&gt;. But if that somehow badly affects your page, then you have to get more creative. One crazy solution is as follows:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Wrap all the contents of the &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;lt;body&amp;gt;&lt;/code&gt; tag in one container &lt;code class=&quot;highlighter-rouge&quot;&gt;div&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;Set the &lt;code class=&quot;highlighter-rouge&quot;&gt;-webkit-transform&lt;/code&gt; property of that div to &lt;code class=&quot;highlighter-rouge&quot;&gt;scale(-1, 1)&lt;/code&gt;. (i.e. this results in horizontal mirroring)&lt;/li&gt;
+  &lt;li&gt;Similarily, mirror the webview itself. (i.e. &lt;code class=&quot;highlighter-rouge&quot;&gt;webview.transform = CGAffeineTransform(scaledX: -1, y: 1)&lt;/code&gt;)&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        <pubDate>Fri, 03 Nov 2017 15:23:00 +0200</pubDate>
+        <link>http://localhost:4000/2017/11/03/WKWebView-Horizontal-Paging.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/11/03/WKWebView-Horizontal-Paging.html</guid>
+        
+        
+      </item>
+    
+  </channel>
+</rss>
