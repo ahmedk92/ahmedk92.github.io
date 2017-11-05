@@ -19,3 +19,6 @@ It's as simple as setting the `direction` style property of the html tag to `rtl
 1. Wrap all the contents of the `<body>` tag in one container `div`.
 2. Set the `-webkit-transform` property of that div to `scale(-1, 1)`. (i.e. this results in horizontal mirroring)
 3. Similarily, mirror the webview itself. (i.e. `webview.transform = CGAffeineTransform(scaledX: -1, y: 1)`)
+
+### Credits:
+Thanks to my friend and colleague [Sayed Arfa](https://www.linkedin.com/in/sayed-arfa/) for suggesting `column-width` and overall inspiration.
