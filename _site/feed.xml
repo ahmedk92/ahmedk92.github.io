@@ -5,8 +5,8 @@
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Fri, 15 Dec 2017 20:54:04 +0200</pubDate>
-    <lastBuildDate>Fri, 15 Dec 2017 20:54:04 +0200</lastBuildDate>
+    <pubDate>Fri, 15 Dec 2017 20:57:16 +0200</pubDate>
+    <lastBuildDate>Fri, 15 Dec 2017 20:57:16 +0200</lastBuildDate>
     <generator>Jekyll v3.6.2</generator>
     
       <item>
@@ -77,6 +77,9 @@
   &lt;li&gt;Set the &lt;code class=&quot;highlighter-rouge&quot;&gt;-webkit-transform&lt;/code&gt; property of that div to &lt;code class=&quot;highlighter-rouge&quot;&gt;scale(-1, 1)&lt;/code&gt;. (i.e. this results in horizontal mirroring)&lt;/li&gt;
   &lt;li&gt;Similarily, mirror the webview itself. (i.e. &lt;code class=&quot;highlighter-rouge&quot;&gt;webview.transform = CGAffeineTransform(scaledX: -1, y: 1)&lt;/code&gt;)&lt;/li&gt;
 &lt;/ol&gt;
+
+&lt;h3 id=&quot;credits&quot;&gt;Credits:&lt;/h3&gt;
+&lt;p&gt;Thanks to my friend and colleague &lt;a href=&quot;https://www.linkedin.com/in/sayed-arfa/&quot;&gt;Sayed Arfa&lt;/a&gt; for suggesting &lt;code class=&quot;highlighter-rouge&quot;&gt;column-width&lt;/code&gt; and overall inspiration.&lt;/p&gt;
 </description>
         <pubDate>Fri, 03 Nov 2017 15:23:00 +0200</pubDate>
         <link>http://localhost:4000/2017/11/03/WKWebView-Horizontal-Paging.html</link>
