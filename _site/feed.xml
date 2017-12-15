@@ -5,9 +5,56 @@
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Sat, 04 Nov 2017 11:04:45 +0200</pubDate>
-    <lastBuildDate>Sat, 04 Nov 2017 11:04:45 +0200</lastBuildDate>
+    <pubDate>Fri, 15 Dec 2017 20:54:04 +0200</pubDate>
+    <lastBuildDate>Fri, 15 Dec 2017 20:54:04 +0200</lastBuildDate>
     <generator>Jekyll v3.6.2</generator>
+    
+      <item>
+        <title>Acheiving Dynamic Localisation in iOS</title>
+        <description>&lt;p&gt;While you can make your app support multiple languages, still there’s no easy (and documented) way to dynamically change the app’s localisation. You either let the user chose the iOS device’s language; and your app just follows along. Or you can use that &lt;a href=&quot;https://stackoverflow.com/q/1669645/715593&quot;&gt;AppleLanguages solution&lt;/a&gt;. But if you want the change somewhere after the app has started (i.e. not in the &lt;code class=&quot;highlighter-rouge&quot;&gt;main&lt;/code&gt; function), you have to close the app, and wait for the user to open it again. Which is not the best we can expect.&lt;/p&gt;
+
+&lt;h2 id=&quot;alternatives&quot;&gt;Alternatives&lt;/h2&gt;
+&lt;p&gt;There are many libraries (on cocoapods for example) that enables you to acheive that without closing the app. But they just work on strings; either an &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; replacement, or overriding its behaviour. Which is good, but unfortunately ignore flipping views on RTL languages like Arabic.&lt;/p&gt;
+
+&lt;h3 id=&quot;what-worked-for-me&quot;&gt;What worked for me&lt;/h3&gt;
+&lt;p&gt;To organize, we have two problems: (1) flipping views based on the chosen language direction preference. (2) Guiding &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; to use the correct strings.&lt;/p&gt;
+
+&lt;h3 id=&quot;1-flipping-views&quot;&gt;(1) Flipping views&lt;/h3&gt;
+&lt;p&gt;Since iOS 9, there’s this property that enables you to decide, for a view, wether it should be always displayed left-to-right, or right-to-left (despite whatever is the language), or it should follow the language. The property is &lt;a href=&quot;https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute&quot;&gt;semanticContentAttribute&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Now, the question is when to set that property to take its effect? and how? Usually, UI is diversely created; maybe from storyboards, XIBs, or code. So, an early point of initialization is a good time; e.g. &lt;code class=&quot;highlighter-rouge&quot;&gt;initWithCoder:&lt;/code&gt; (for views designed in Interface Builder) or &lt;code class=&quot;highlighter-rouge&quot;&gt;iniWithFrame&lt;/code&gt; (for views created by code). &lt;code class=&quot;highlighter-rouge&quot;&gt;awakeFromNib&lt;/code&gt; is a good time too for views designed in Interface Builder. OK, but how would we override those methods? &lt;a href=&quot;http://nshipster.com/method-swizzling/&quot;&gt;Swizzling&lt;/a&gt; to the rescue.&lt;/p&gt;
+
+&lt;p&gt;Through swizzling, we can check the language in &lt;code class=&quot;highlighter-rouge&quot;&gt;awakeFromNib&lt;/code&gt; for example, and set the relevant &lt;code class=&quot;highlighter-rouge&quot;&gt;semanticContentAttribute&lt;/code&gt;. Good!, but there may be a little caveat. There may be some views that are required to be always left-to-right or righ-to-left all the time; we don’t want to mess them up. We can avoid that by a simple check; we only apply the &lt;code class=&quot;highlighter-rouge&quot;&gt;semanticContentAttribute&lt;/code&gt; to views with an &lt;code class=&quot;highlighter-rouge&quot;&gt;.unspecified&lt;/code&gt; value.&lt;/p&gt;
+
+&lt;p&gt;So far so good. But what about currently visible views? what can we do about them? One can think of making every visible view observe the language change (via &lt;code class=&quot;highlighter-rouge&quot;&gt;NSNotificationCenter&lt;/code&gt; for example), then try to force a redraw. But I don’t like this approach, and I prefer to simply restart the flow of my app. That is re-assigning the window’s root view controller with a new one, and start over the app’s flow. Something like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIApplication&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shared&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rootViewController&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;view&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;subviews&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;view&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;removeFromSuperView&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;UIApplication&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shared&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rootViewController&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIApplication&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shared&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rootViewController&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;storyBoard&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;instantiateInitialViewController&lt;/span&gt; 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;That’s it. And it works nicely.&lt;/p&gt;
+
+&lt;h3 id=&quot;2-nslocalizedstring&quot;&gt;(2) NSLocalizedString&lt;/h3&gt;
+&lt;p&gt;As mentioned above, there are many libraries that do this. Most of them offer a replacement for &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt;. But sometimes, the dynamic localiztation feature is required so late in the project life-time that &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; is scattered all over the project. So, overriding its behavior would be better. I heard about a library that does this, but couldn’t find it 😑. However, that overriding is not hard.&lt;/p&gt;
+
+&lt;p&gt;I built my solution on &lt;a href=&quot;https://stackoverflow.com/a/20257557/715593&quot;&gt;this StackOverflow answer&lt;/a&gt;. The whole discussion is useful. The idea is that &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; is just a macro that uses &lt;code class=&quot;highlighter-rouge&quot;&gt;localizedStringForKey:value:table:&lt;/code&gt; method of the &lt;code class=&quot;highlighter-rouge&quot;&gt;NSBundle&lt;/code&gt; class; specifically on &lt;code class=&quot;highlighter-rouge&quot;&gt;[NSBundle mainBundle]&lt;/code&gt; instance. So, swizzling is again used here. In short, the &lt;code class=&quot;highlighter-rouge&quot;&gt;[NSBundle mainBundle]&lt;/code&gt; instance’s implementation is replaced by an &lt;code class=&quot;highlighter-rouge&quot;&gt;NSBundle&lt;/code&gt; subclass that, on language change, makes the &lt;code class=&quot;highlighter-rouge&quot;&gt;[NSBundle mainBundle]&lt;/code&gt; return a new bundle that is relevant to the selected language. Easy, but tricky.&lt;/p&gt;
+
+&lt;p&gt;That’s it.&lt;/p&gt;
+
+&lt;h3 id=&quot;notes&quot;&gt;Notes&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Maybe it won’t be enough to just have the views flipped; you may want text views (e.g. &lt;code class=&quot;highlighter-rouge&quot;&gt;UILabel&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;UITextField&lt;/code&gt;) to flip the text alignment too. That’s acheivable in our same &lt;code class=&quot;highlighter-rouge&quot;&gt;awakeFromNib&lt;/code&gt; implementation explained above. All you need is checking wether the current view is a &lt;code class=&quot;highlighter-rouge&quot;&gt;UILabel&lt;/code&gt;, then repeat the same logic; check wether the text alignment (&lt;code class=&quot;highlighter-rouge&quot;&gt;NSTextAlignment&lt;/code&gt;) is set to &lt;code class=&quot;highlighter-rouge&quot;&gt;.natural&lt;/code&gt;, then set to the correct alignment (i.e. &lt;code class=&quot;highlighter-rouge&quot;&gt;.left&lt;/code&gt;, or &lt;code class=&quot;highlighter-rouge&quot;&gt;.right&lt;/code&gt;).&lt;/li&gt;
+&lt;/ul&gt;
+
+</description>
+        <pubDate>Fri, 15 Dec 2017 09:00:00 +0200</pubDate>
+        <link>http://localhost:4000/2017/12/15/Acheiving-Dynamic-Localisation-in-iOS.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2017/12/15/Acheiving-Dynamic-Localisation-in-iOS.html</guid>
+        
+        
+      </item>
     
       <item>
         <title>WKWebView Horizontal Paging</title>
