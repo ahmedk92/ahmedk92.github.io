@@ -13,7 +13,7 @@ There are many libraries (on cocoapods for example) that enables you to acheive 
 To organize, we have two problems: (1) flipping views based on the chosen language direction preference. (2) Guiding `NSLocalizedString` to use the correct strings.
 
 ### (1) Flipping views
-Since iOS 9, there's this property that enables you to decide, for a view, wether it should be always displayed left-to-right, or right-to-left (despite whatever is the language), or it should follow the language. The property is [semanticContentAttribute](https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute).  
+Since iOS 9, there's this property that enables you to decide, for a view, whether it should be always displayed left-to-right, or right-to-left (despite whatever is the language), or it should follow the language. The property is [semanticContentAttribute](https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute).  
 
 Now, the question is when to set that property to take its effect? and how? Usually, UI is diversely created; maybe from storyboards, XIBs, or code. So, an early point of initialization is a good time; e.g. `initWithCoder:` (for views designed in Interface Builder) or `iniWithFrame` (for views created by code). `awakeFromNib` is a good time too for views designed in Interface Builder. OK, but how would we override those methods? [Swizzling](http://nshipster.com/method-swizzling/) to the rescue.
 
