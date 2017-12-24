@@ -4,7 +4,7 @@ title:  "Acheiving Dynamic Localisation in iOS"
 date:   2017-12-15 09:00:00 +0200
 ---
 
-While you can make your app support multiple languages, still there's no easy (and documented) way to dynamically change the app's localisation. You either let the user chose the iOS device's language; and your app just follows along. Or you can use that [AppleLanguages solution](https://stackoverflow.com/q/1669645/715593). But if you want the change somewhere after the app has started (i.e. not in the `main` function), you have to close the app, and wait for the user to open it again. Which is not the best we can expect.
+While you can make your app support multiple languages, still there's no easy (and documented) way to dynamically change the app's localisation. You either let the user choose the iOS device's language; and your app just follows along. Or you can use that [AppleLanguages solution](https://stackoverflow.com/q/1669645/715593). But if you want the change somewhere after the app has started (i.e. not in the `main` function), you have to close the app, and wait for the user to open it again. Which is not the best we can expect.
 
 ## Alternatives
 There are many libraries (on cocoapods for example) that enables you to acheive that without closing the app. But they just work on strings; either an `NSLocalizedString` replacement, or overriding its behaviour. Which is good, but unfortunately ignore flipping views on RTL languages like Arabic.
