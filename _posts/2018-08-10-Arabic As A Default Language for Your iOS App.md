@@ -13,7 +13,7 @@ Sometimes you want to make an Arabic-only app. Or you may want to support some l
 
 You may be tempted to layout your views directly in Xcode's Interface Builder exactly as your design guide suggests. For example, if your design is like the image below, you may decide to put the button on the leading side, and the textfield on the trailing side.
 
-![design](design.png)
+![design](../assets/design.png)
 
 The problem with this approach is that iOS will consider this to be how you want your app to look in Left-to-Right mode. That is, back buttons in the navigation bar stil will be by default on the left, alongside the navigation controller's back swipe gesture. 
 
@@ -28,7 +28,7 @@ That's it. Run your project and enjoy your flipped interface.
 
 However, I don't like this approach. As it may leave your project with a somewhat nonesensical project configuration. I mean, if you open your project settings (not target settings), you'll find these configurations in the Localization section:
 
-![localizationsettings](localizationsettings.png)
+![localizationsettings](../assets/localizationsettings.png)
 
 It says English is the development language, while it's really not the case. While you can remove it, and add Arabic, you dont' get the `- Development Language` part infront of it. Also, Xcode will generate Arabic localization files for your storyboars which you probably don't need.
 
@@ -41,11 +41,11 @@ Steps:
 3. Open `project.pbxproj` with a text editor.
 4. `⌘` + `F` and look for the word `region`. You should find two matches, `developmentRegion` and `knownRegions`. Change the `en` in their values to `ar`, like the image below.
 
-![regions](regions.png)
+![regions](../assets/regions.png)
 
 That's it. You get Arabic as the development language.
 
-![localizationsettingsar](localizationsettingsar.png)
+![localizationsettingsar](../assets/localizationsettingsar.png)
 
 ---
 
