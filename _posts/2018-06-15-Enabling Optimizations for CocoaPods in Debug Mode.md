@@ -12,7 +12,7 @@ Compiler optimizations are disabled by default in Debug mode. This is to enable 
 
 Sometimes, we use a dependency (e.g. via CocoaPods) that may perofrm noticebly slower in Debug mode. Since it's a dependency, and as long as it isn't causing problems, we probably are not interested in debugging it. Therefore we can comfortably enable optimizations in Debug mode.
 
-![Example:](optim.png)
+![Example:]({{site.url}}/assets/optim.png)
 
 ## ⚠️ Not A Lasting Solution ⚠️
 
