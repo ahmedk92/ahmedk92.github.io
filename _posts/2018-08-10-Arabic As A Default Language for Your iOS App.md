@@ -124,3 +124,6 @@ As you may be already understanding by now, `MyApplication` is our custom class 
 In the code snippet above, I do an additional check to see if we've done this before; to avoid unwanted repitition.
 
 That's it. We're done. It's finally over.
+
+### References
+[Changing default development language](https://www.ralfebert.de/ios-examples/xcode/change-development-language/)
