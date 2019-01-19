@@ -17,7 +17,7 @@ It's worth noting that all these solutions are essentially built upon `UIScrollV
 ## Limitations
 ### 1. Page Size is Fixed
 
-A common trait among the previous solutions is the fixed page size. That is, the amount by which content is paged is always equal to the scrollView frame. If you want to have a page size different from the visible "frame", you have to seek workarounds; e.g. this clever solutions [[1](http://khanlou.com/2013/04/changing-the-size-of-a-paging-scroll-view/), [2]((http://khanlou.com/2013/04/paging-a-overflowing-collection-view/))] by Khanlou.
+A common trait among the previous solutions is the fixed page size. That is, the amount by which content is paged is always equal to the scrollView frame. If you want to have a page size different from the visible "frame", you have to seek workarounds; e.g. this clever solutions [[1](http://khanlou.com/2013/04/changing-the-size-of-a-paging-scroll-view/), [2](http://khanlou.com/2013/04/paging-a-overflowing-collection-view/)] by Khanlou.
 
 ### 2. Uneven Page Size
 
@@ -67,6 +67,8 @@ Notes:
 2. We have to inset the `UICollectionView` by half the spacing at each side to achieve contentSize multiple to that of pair width.
 
 3. Large swipes may cause jumping over a page. This avoidable by clamping the amount by which the `targetContentOffset` changes. It may also appear as a feature not a defect. 😄
+
+4. Very weak swipes that are not enough to make a page change caused a choppy animation. I mitigated this by detecting it (non-zero velcoity, same `targetContentOffset`) then setting the content offset with an animation.
 
 ## Conclusion
 
