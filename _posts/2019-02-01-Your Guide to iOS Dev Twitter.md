@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "2019-02-01-Your Guide to iOS Dev Twitter"
+title:  "Your Guide to iOS Dev Twitter"
 date:   2019-02-01 18:35:00 +0200
 ---
 
