@@ -6,7 +6,7 @@ date:   2019-02-01 18:35:00 +0200
 
 Here I should be listing (and categorizing) the most useful iOS Developer Twitter accounts to follow.
 
-Last week, I found myself taking a colleague in a tour through Twitter accounts and telling him about what accounts to follow if he wants to learn about specific something (about iOS). He responded, "you should share this." So, driven by guilt (my \#1 motivation), I write this in hope of someone finding useful.
+Last week, I found myself taking a colleague in a tour through Twitter accounts and telling him about what accounts to follow if he wants to learn about specific something (about iOS). He responded, "you should share this." So, driven by guilt (my \#1 motivation), I write this in hope of someone finding it useful.
 
 >This is not an exhaustive list (for sure!); maybe I dropped someone (or more), and of course more creative people are going to rise in the future. Help me make this list age well!
 
