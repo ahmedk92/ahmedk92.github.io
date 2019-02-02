@@ -66,4 +66,4 @@ The needed inset amount is equal to half the width of the screen minus half the 
 
 ## Conclusion
 
-Nothing so fancy. I hope you find it useful. Full demo source is [here](https://github.com/ahmedk92/MoodPickerDemo). For quest
+Nothing so fancy. I hope you find it useful. Full demo source is [here](https://github.com/ahmedk92/MoodPickerDemo).
