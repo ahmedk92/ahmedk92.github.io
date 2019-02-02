@@ -52,6 +52,7 @@ Text rendering is not a piece of cake, these people get it.
 
 ## Misc
 They write useful stuff; I just cannot categorize 😂
+- [Max Howell](https://twitter.com/mxcl)
 - [Krzysztof Zabłocki](https://twitter.com/merowing_)
 - [Arek Holko](https://twitter.com/arekholko)
 - [Alberto De Bortoli](https://twitter.com/albertodebo)
