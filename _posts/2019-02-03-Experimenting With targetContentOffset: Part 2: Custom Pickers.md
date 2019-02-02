@@ -54,6 +54,16 @@ If we implement till this point, we'll find that there are a couple of cells at 
 
 The needed inset amount is equal to half the width of the screen minus half the width of the cell.
 
+```swift
+    override func viewDidLayoutSubviews() {
+        spacing = collectionView.bounds.width / 2 - cellSize.width / 2
+    }
+
+     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        return UIEdgeInsets(top: 0, left: spacing, bottom: 0, right: spacing)
+    }
+```
+
 ## Conclusion
 
 Nothing so fancy. I hope you find it useful. Full demo source is [here](https://github.com/ahmedk92/MoodPickerDemo). For quest
