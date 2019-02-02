@@ -42,7 +42,7 @@ I don't know the perfect rounding strategy here, but I suggest rounding with res
 
 This will run fine in most cases. However, we'll get a not so pleasant result when the velocity is exactly zero. That's if we consider a velocity of zero is either left or right, we can notice that "slow" scrolling is biased towards that direction. What I mean by slow scrolling is when your scrolling gesture is more of a slow pan rather than a quick swipe; something similar to the slide to answer gesture.
 
-One solution to this problem is to add half the width of the cell to the `targetContentOffset` before division. I went with that and works fine.
+One solution to this problem is to add half the width of the cell to the `targetContentOffset` before division. I went with that and works fine with one caveat. When scrolling to the last item, this way of rounding results in an index value greater than the last valid item index by one. I work around this by [clamping](https://en.wikipedia.org/wiki/Clamping_(graphics)) the resulting index.
 
 ```swift
 var targetIndex = (targetContentOffset.pointee.x + cellSize.width / 2) / cellSize.width
