@@ -45,7 +45,12 @@ This will run fine in most cases. However, we'll get a not so pleasant result wh
 One solution to this problem is to add half the width of the cell to the `targetContentOffset` before division. I went with that and works fine with one caveat. When scrolling to the last item, this way of rounding results in an index value greater than the last valid item index by one. I work around this by [clamping](https://en.wikipedia.org/wiki/Clamping_(graphics)) the resulting index.
 
 ```swift
-var targetIndex = (targetContentOffset.pointee.x + cellSize.width / 2) / cellSize.width
+        var targetIndex = (targetContentOffset.pointee.x + cellSize.width / 2) / cellSize.width
+        targetIndex = velocity.x > 0 ? ceil(targetIndex) : floor(targetIndex)
+        targetIndex = targetIndex.clamped(minValue: 0, maxValue: CGFloat(emojis.count - 1))
+        targetContentOffset.pointee.x = targetIndex * cellSize.width
+        
+        index = Int(targetIndex)
 ```
 
 ## Insets
