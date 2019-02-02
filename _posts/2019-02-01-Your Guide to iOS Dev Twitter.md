@@ -23,6 +23,7 @@ People I can't imagine the iOS community without them.
 - [Peter Steinberger](https://twitter.com/steipete)
 - [Nick Lockwood](https://twitter.com/nicklockwood)
 - [Rob Mayoff](https://twitter.com/rmayoff)
+- [Dave DeLong](https://twitter.com/davedelong)
 
 ## Artists
 Bright minds that write impressive articles regarding lesser known/niche topics.
@@ -44,6 +45,10 @@ Text rendering is not a piece of cake, these people get it.
 - [Ryan Nystrom](https://twitter.com/_ryannystrom)
 - [Stephan Tolksdorf](https://twitter.com/s_tolksdorf)
 - [Oliver Drobnik (Cocoanetics)](https://twitter.com/Cocoanetics)
+
+## Webkit
+- [Brady Eidson](https://twitter.com/bradeeoh)
+- [Ricky Mondello](https://twitter.com/rmondello)
 
 ## Misc
 They write useful stuff; I just cannot categorize 😂
