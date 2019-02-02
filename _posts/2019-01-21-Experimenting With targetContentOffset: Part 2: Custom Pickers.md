@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Experimenting With targetContentOffset: Part 2: Custom Pickers"
-date:   2019-01-21 20:23:00 +0200
+date:   2019-02-03 00:12:07 +0200
 ---
 
 This post should be more fun than its [predecessor]({{ site.baseurl }}{% post_url 2019-01-19-Experimenting With targetContentOffset: Part 1: Uneven Pagination %}). We're going to make a snappy picker control similar to `UIPickerView`, utilizing (of course) `scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)`.
