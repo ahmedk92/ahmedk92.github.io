@@ -69,6 +69,18 @@ The needed inset amount is equal to half the width of the screen minus half the 
     }
 ```
 
+## Note
+
+As [Amr Mohammd](https://twitter.com/iAmrMohamed/status/1091955349744177152?s=20) commented, in case of using `UICollectionView` we can avoid the maths done in our `scrollViewWillEndDragging` method by utilizing `UICollectionView.indexPathForItem(at:)`.
+
+```swift
+        let point = CGPoint(x: targetContentOffset.pointee.x + scrollView.frame.midX, y: targetContentOffset.pointee.y)
+        guard let indexPath = collectionView.indexPathForItem(at: point) else { return }
+        index = indexPath.row
+        
+        targetContentOffset.pointee.x = CGFloat(index) * cellSize.width
+```
+
 ## Conclusion
 
 Nothing so fancy. I hope you find it useful. Full demo source is [here](https://github.com/ahmedk92/MoodPickerDemo).
