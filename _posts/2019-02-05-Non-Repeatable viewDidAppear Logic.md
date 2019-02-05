@@ -60,7 +60,7 @@ override func viewDidAppear(_ animated: Bool) {
 
 ### 2. Deferring with GCD
 
-Magic. GCD helps in executing code *later*. There are two ways to do it for our need: `async` and `asyncAfter(deadline:execute:)`. We can use either in `viewDidLoad` to execute non-repetable code "later enough".
+Magic. GCD helps in executing code *later*. There are two ways to do it for our need: `async` and `asyncAfter(deadline:execute:)`. We can use either in `viewDidLoad` to execute non-repeatable code "later enough".
 
 `asyncAfter(deadline:execute:)` is straight forward:
 
