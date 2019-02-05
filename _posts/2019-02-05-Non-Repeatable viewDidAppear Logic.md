@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Non-Repeated viewDidAppear Logic"
+title:  "Non-Repeatable viewDidAppear Logic"
 date:   2019-02-05 03:40:00 +0200
 ---
 
@@ -19,13 +19,13 @@ One can introduce a `Bool` like `viewAppeared`; checking and setting it for once
 var viewAppeared = false
 
 override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
+    super.viewDidAppear(animated)
 
-        if !viewAppeared {
-            // Do non-repeatable logic...
-        }
+    if !viewAppeared {
+        // Do non-repeatable logic...
+    }
 
-        viewAppeared = true
+    viewAppeared = true
 }
 ```
 
@@ -43,17 +43,17 @@ override func viewDidLoad() {
 }
 
 override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
+    super.viewDidAppear(animated)
 
-        if !viewAppeared {
+    if !viewAppeared {
 
-            // this check again
-            if let name = name {
+        // this check again
+        if let name = name {
 
-            }
         }
+    }
 
-        viewAppeared = true
+    viewAppeared = true
 }
 
 ```
