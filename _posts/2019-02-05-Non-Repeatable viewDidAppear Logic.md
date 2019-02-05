@@ -83,7 +83,7 @@ Believe me, I've read a lot about run loops, I still don't understand them much.
 
 So, When we dispatch code async on the main queue from the main thread, it doesn't run immediately; it waits to be polled in the next run loop, leaving enough time for the requirements mentioned above to be fulfilled. Remember our blog post? 😂 Now let's continue it. This GCD thing worth it's own blog post.
 
->If you look at code I wrote (I hope you don't), you'll find me guilty of using this to hack my way through. It's not good, I don't recommend. We should invest more time to really solve latency problems rather than working around it.
+>If you look at code I wrote (I hope you don't), you'll find me guilty of using this to hack my way through. It's not good, I don't recommend it. We should invest more time to really solve latency problems rather than working around it.
 
 ## A Better Solution?
 
