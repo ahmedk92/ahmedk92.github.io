@@ -79,7 +79,7 @@ Why 0.1 seconds? No idea. It's just late enough. It works, but it depends on a m
 
 What about just `async`? It works too, no explicit delay needed. That's because code in a `DispatchQueue.main.async` block **is executed in the next [run loop](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html)**.
 
-Believe me, I read a lot about run loops, I still don't understand them much. However, for the main thread, you can interpret them as time slices in which the main thread accepts input, updates UI, calculate layouts, and more importantly ***"polls"* code enqueued via `DispatchQueue.main.async`**.
+Believe me, I've read a lot about run loops, I still don't understand them much. However, for the main thread, you can interpret them as time slices in which the main thread accepts input, updates UI, calculate layouts, and more importantly ***"polls"* code enqueued via `DispatchQueue.main.async`**.
 
 So, When we dispatch code async on the main queue from the main thread, it doesn't run immediately; it waits to be polled in the next run loop, leaving enough time for the requirements mentioned above to be fulfilled. Remember our blog post? 😂 Now let's continue it. This GCD thing worth it's own blog post.
 
