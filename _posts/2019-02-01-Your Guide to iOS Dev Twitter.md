@@ -92,6 +92,9 @@ People behind tools such as Fastlane, Cocoapods, ...etc.
 - [Samuel Giddins](https://twitter.com/segiddins)
 - [Orta Therox](https://twitter.com/orta)
 
+## Subscriptions and In-app Purchases
+- [Jacob Eiting](https://twitter.com/jeiting)
+
 ## Students
 Not belittling them of course, but despite their young age, they're incredibely talented.
 
