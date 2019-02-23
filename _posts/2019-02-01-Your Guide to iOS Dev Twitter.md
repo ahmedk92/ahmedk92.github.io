@@ -46,6 +46,9 @@ Text rendering is not a piece of cake, these people get it.
 - [Stephan Tolksdorf](https://twitter.com/s_tolksdorf)
 - [Oliver Drobnik (Cocoanetics)](https://twitter.com/Cocoanetics)
 
+## Graphics & Math
+- [Bartosz Ciechanowski](https://twitter.com/bciechanowski)
+
 ## Webkit
 - [Brady Eidson](https://twitter.com/bradeeoh)
 - [Ricky Mondello](https://twitter.com/rmondello)
