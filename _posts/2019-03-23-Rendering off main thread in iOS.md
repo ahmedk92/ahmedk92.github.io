@@ -28,7 +28,7 @@ I made a very [simplistic demo](https://github.com/ahmedk92/PrerenderingDemo) th
 
 ## Where to go from here?
 
-I'm just exploring this technique myself. It's not something new. There are already amazing libraries which adopt this approach; namely Ryan Nystrom's [StyledTextKit](https://github.com/GitHawkApp/StyledTextKit), and [Texture](https://texturegroup.org)(AsyncDisplayKit).
+I'm just exploring this technique myself. It's not something new. There are already amazing libraries which adopt this approach; namely Ryan Nystrom's [StyledTextKit](https://github.com/GitHawkApp/StyledTextKit), and [Texture](https://texturegroup.org) (AsyncDisplayKit).
 
 
 ## Notes
@@ -39,3 +39,7 @@ I'm just exploring this technique myself. It's not something new. There are alre
     - The second parameter is whether to draw opaquely or transparent. If you know that your view is going to be not transparent, it's good to set this to true, as transparency is a computationally expensive task. See this [WWDC session at 29:28 mark](https://developer.apple.com/videos/play/wwdc2012/506/).
 
 - Use a serial `DispatchQueue` instead of a gloabl queue if you're going to render multiple views in series, or group them in a single block to be executed in a global queue. Anyways don't execute each block individually in a gobal queue. This to avoid creating more threads than CPU can handle; what's called "Thread Explosion". See this [WWDC talk at 16:42 mark](https://developer.apple.com/videos/play/wwdc2018/219/?time=1002).
+
+- When using `NSAttributedString`'s boundingRect:
+    - You have to use an `NSAttributedString` instance with at least `.font` and `.foregroundColor` attributes set, or else it won't give correct results.
+    - The first `CGSize` parameter it takes marks what constrained dimension it expects, and what other dimension to compute. For example, to emulate the behaviour of a `UILabel` with `numberOfLines` set to 0, you provide a fixed width, and a height value of `.greatestFiniteMagnitude`. [Example](https://github.com/ahmedk92/PrerenderingDemo/blob/a17dddf3bf609344499056c1b52e16bee40bf3ee/PrerenderingDemo/LabelModel.swift#L31).
