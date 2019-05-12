@@ -4,7 +4,7 @@ title:  "Simple Overflowing Paginated UIScrollView"
 date:   2019-05-12 10:44:00 +0200
 ---
 
-So, I was using this beautiful Quran app [Ayah](https://itunes.apple.com/app/apple-store/id706037876?mt=8). I noticed something cool about how it pages its content; there is a visual divider between each two inner pages, and a different one between outer pages. See the below video for clarity.
+So, I was using this beautiful Quran app [Ayah](https://itunes.apple.com/app/apple-store/id706037876?mt=8). I noticed something cool about how it pages its content; there is a visual divider between each two inner pages, and a different one between outer pages. See the below gif for clarity.
 
 ![Overflowing Pagination]({{site.url}}/assets/ayah1.gif)
 
