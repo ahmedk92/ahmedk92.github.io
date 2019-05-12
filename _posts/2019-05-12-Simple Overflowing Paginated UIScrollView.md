@@ -18,8 +18,8 @@ Techniques mentioned above deal with a trickier problem; paging with a page size
 
 If you notice, you'll see that although there are two different looking separator views, they are of the same size. So, this gives us an idea. Instead of having the width of the scroll view being equal to our screen, we increase it by how big we want our separator views to be (with the extra width being evenly distributed over both sides). Moreover, we center the scroll view in which the extra portions are off-screen. And that's it. Here's a [sample code](https://github.com/ahmedk92/SpacedPageViewController), and a demo of it below.
 
+![Overflowing Pagination]({{site.url}}/assets/overflowing.m4v)
+
 And as you may already know, as this applies to `UIScrollView`, then it applies to `UIPageViewController` (as in the linked sample) and `UICollectionView` with `isPagingEnabled`.
 
 Thanks. Looking forward for your feedback.
-
-![Overflowing Pagination]({{site.url}}/assets/overflowing.m4v)
