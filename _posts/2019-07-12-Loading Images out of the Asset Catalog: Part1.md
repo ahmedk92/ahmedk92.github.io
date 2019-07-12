@@ -5,13 +5,13 @@ date:   2019-07-12 14:16:00 +0200
 ---
 
 ## Asset Catalog
-We use [Asset Catalog](https://developer.apple.com/library/archive/documentation/Xcode/Reference/xcode_ref-Asset_Catalog_Format/index.html) to store images we use inside our apps. If you're not using it, you should use it. It's not just a fancy way to organize or resources. It also does some optimizations we happen to overlook them.
+We use [Asset Catalog](https://developer.apple.com/library/archive/documentation/Xcode/Reference/xcode_ref-Asset_Catalog_Format/index.html) to store images we use inside our apps. If you're not using it, you should. It's not just a fancy way to organize our resources. It also does some optimizations we happen to overlook them.
 
 However, if you have to not use Asset Catalogs, there are some things you should be aware of. In this part, we are going to investigate the **scale** property of an image.
 
 ## @1x, @2x, @3x
 
-The most noticeable feature of asset catalogs is the facility to provide different versions of an image for different screen scales. If we don't use asset catalogs, we are required to put such information in the bundled file's name (e.g. pic@2x.png, pic@3x.png). If we don't provide such info, an `UIImage` instance created from such file will have a default scale factor of 1.0.
+The most noticeable feature of asset catalogs is the facility to provide different versions of an image for different screen scales. If we don't use asset catalogs, we are required to put such information in the bundled file's name (e.g. pic@2x.png, pic@3x.png). If we don't provide such info, a `UIImage` instance created from such file will have a default scale factor of 1.0.
 
 Good, but what if we have an app that loads images from a folder? We don't want to hard-code image names in our project. We had this use case in one of our apps, and the code to read such images involved enumerating file paths under the given folder URL and creating `UIImage` instances like this:
 
@@ -44,3 +44,5 @@ let image = UIImage(data: data, scale: UIScreen.main.scale)
 Where `data` is a `Data` instance created from a given file path or a URL.
 
 This way we ensure the image appears at its actual pixel size in any device.
+
+Here's an [example](https://github.com/ahmedk92/ImageScale) demonstrating this.
