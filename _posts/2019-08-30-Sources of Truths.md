@@ -65,7 +65,7 @@ class ViewController: UIViewController {
 }
 ```
 
-We can also use a weak reference if we want to be sure that the presented alert is a particular one.
+Alternatively, we can use a weak reference if we want to be sure that the presented alert is a particular one.
 
 ```swift
 class ViewController: UIViewController {
