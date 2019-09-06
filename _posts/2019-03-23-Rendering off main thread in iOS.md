@@ -43,3 +43,6 @@ I'm just exploring this technique myself. It's not something new. There are alre
 - When using `NSAttributedString`'s boundingRect:
     - You have to use an `NSAttributedString` instance with at least `.font` and `.foregroundColor` attributes set, or else it won't give correct results.
     - The first `CGSize` parameter it takes marks what constrained dimension it expects, and what other dimension to compute. For example, to emulate the behaviour of a `UILabel` with `numberOfLines` set to 0, you provide a fixed width, and a height value of `.greatestFiniteMagnitude`. [Example](https://github.com/ahmedk92/PrerenderingDemo/blob/a17dddf3bf609344499056c1b52e16bee40bf3ee/PrerenderingDemo/LabelModel.swift#L31).
+
+## Update (06-09-2019)
+This made its way to a talk at a [SwiftCairo](https://twitter.com/SwiftCairo) meet-up. You can find the slides and a sample code [here](https://github.com/ahmedk92/AsyncDrawing).
