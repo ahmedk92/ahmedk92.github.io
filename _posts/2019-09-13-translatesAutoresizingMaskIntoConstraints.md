@@ -9,7 +9,7 @@ Did you ever forget to set `translatesAutoresizingMaskIntoConstraints` to `false
 But did you ever forget to set it to `true`, and it also did cause other troubles? This is what this article is about.
 
 
-## What is `translatesAutoresizingMaskIntoConstraints`?
+### What is `translatesAutoresizingMaskIntoConstraints`?
 
 From the docs:
 
@@ -21,9 +21,9 @@ From the docs:
 
 So, in an AutoLayout-enabled view (what you get from using Interface Builder commonly), every view is expected to have constraints to define its size and position. So, as a convenience, if we ever want to manually layout a specific view in a such AutoLayout-enabled view hierarchy, having `translatesAutoresizingMaskIntoConstraints` set to `true` (the default) results in translating our changes to the `frame` (and `bounds` and `center`) property into constraints. 
 
-So, this is why we set it to `false` if we are adding constraints to a view in code. But when do we need to set it to `true`? As mentioned in the third paragraph from the docs excerpt above, Interface Builder set this property to false automatically **because it expects us to add constraints**. 
+So, this is why we set it to `false` if we are adding constraints to a view in code, to avoid ending u with conflicting constraints. But when do we need to set it to `true`? As mentioned in the third paragraph from the docs excerpt above, Interface Builder set this property to false automatically **because it expects us to add constraints**. 
 
-## When to set `translatesAutoresizingMaskIntoConstraints` to `true`?
+### When to set `translatesAutoresizingMaskIntoConstraints` to `true`?
 
 So, if you, for any reason, have to define your view in Interface Builder, but also want to manually layout it in code, you'll need to set `translatesAutoresizingMaskIntoConstraints` to `true` before layout.
 
