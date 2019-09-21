@@ -22,3 +22,7 @@ It's as simple as setting the `direction` style property of the html tag to `rtl
 
 ### Credits:
 Thanks to my friend and colleague [Sayed Arfa](https://www.linkedin.com/in/sayed-arfa/) for suggesting `column-width` and overall inspiration.
+
+# Update
+
+At the time of writing this post, I somehow missed this [thread](https://github.com/readium/architecture/issues/10). They suggested to use the undocumented(?) CSS property value `overflow:-webkit-paged-x`. This is more convenient than what's explained above as it doesn't need us to compute a width nor do additional work for RTL handling. However, it doesn't seem reliable, as the chromium project seems to [plan to remove it](https://www.chromestatus.com/feature/5731653806718976).
