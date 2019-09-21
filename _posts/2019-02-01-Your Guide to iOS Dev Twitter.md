@@ -116,4 +116,5 @@ Reverse engineering wizardry and stuff I don't understand yet impressed with.
 
 ## Rising Stars
 - [Vadim Bulavin](https://twitter.com/V8tr)
+- [Antoine v.d. SwiftLee](https://twitter.com/twannl)
 - [Mostafa Abdellateef](https://twitter.com/mmabdellateef)
