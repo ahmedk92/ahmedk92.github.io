@@ -135,3 +135,46 @@ struct Product: Decodable {
 ```
 
 That's it. Thanks for reading!
+
+# Update (16-10-2019)
+
+I stumbled upon [this brilliant suggestion](https://twitter.com/jsslai/status/1184536734081650690?s=20) by [Jussi Laitinen
+](https://twitter.com/jsslai?s=17).
+Now, our solution can be cleaner by eliminating the third `Converter` type, and instead requiring our first type to be convertible from the second type. Let's see this in code:
+
+```swift
+protocol Convertible {
+    associatedtype T
+    init?(_ value: T)
+}
+
+struct DecodableEither<T1: Decodable & Convertible, T2: Decodable>: Decodable where T1.T == T2 {
+    let value: T1
+    
+    init(from decoder: Decoder) throws {
+        let values = try decoder.singleValueContainer()
+        do {
+            value = try values.decode(T1.self)
+        } catch {
+            let t2 = try values.decode(T2.self)
+            guard let t1 = T1(t2) else {
+                throw Error.conversionError
+            }
+            
+            value = t1
+        }
+    }
+    
+    enum Error: Swift.Error {
+        case conversionError
+    }
+}
+```
+
+Also, converting from `String` to `Int` is a lot simpler now, since `Int` already has a [failable initializer](https://www.hackingwithswift.com/sixty/10/9/failable-initializers) that accepts a `String`. We just extend `Int` to conform to our `Convertible` protocol while stating that the generic/associated type `T` to be `String`.
+
+```swift
+extension Int: Convertible {
+    typealias T = String
+}
+```
