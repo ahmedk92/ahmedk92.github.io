@@ -138,8 +138,7 @@ That's it. Thanks for reading!
 
 # Update (16-10-2019)
 
-I stumbled upon [this brilliant suggestion](https://twitter.com/jsslai/status/1184536734081650690?s=20) by [Jussi Laitinen
-](https://twitter.com/jsslai?s=17).
+I stumbled upon [this brilliant suggestion](https://twitter.com/jsslai/status/1184536734081650690?s=20) by [Jussi Laitinen](https://twitter.com/jsslai?s=17).
 Now, our solution can be cleaner by eliminating the third `Converter` type, and instead requiring our first type to be convertible from the second type. Let's see this in code:
 
 ```swift
