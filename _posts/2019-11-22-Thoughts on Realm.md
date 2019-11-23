@@ -94,8 +94,6 @@ implementation from the rest of your project.
 
 ## Conclusion
 
-Notice some of this applies to other 
-
-At last, if something sounds too good to be true, it probably is.
+So, if something sounds too good to be true, it probably is.
 This is not a rant against Realm (maybe the docs 😅), it's a brilliant solution made by brilliant engineers.
 However, we developers should deal with any tool with a grain of salt, and understand its limits before its capabilities.
