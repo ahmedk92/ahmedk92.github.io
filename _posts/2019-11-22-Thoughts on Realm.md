@@ -13,8 +13,8 @@ Here I discuss some of them.
 Laziness may be the defining feature of Realm.
 Performance-wise, Realm saves a lot of execution time by following a lazy approach in retrieving data.
 That is, queries are not really evaluated unless the results are accessed.
-And data (objects and properties) are not loaded ino memory unless accessed, too.
-Consider the following code (from their docs):
+And data (objects and properties) are not loaded into memory unless accessed, too.
+Consider the following code (from the docs):
 
 ```swift
 let dogs = realm.objects(Dog.self) // retrieves all Dogs from the default Realm
@@ -55,7 +55,7 @@ start giving you something to work with. So, the full cost of the filtering part
 Now we're starting to make good sense of how Realm works in regard to data retrieval.
 The question is, how this can hurt us?
 
-Notice we use a synchronous API when using Realm. We don't bothering we asynchrony, callbacks, 
+Notice we use a synchronous API when using Realm. We don't bother with asynchrony, callbacks, 
 threads, etc. We get data in a plain simple way.
 And since everything goes as planned, we don't block the UI thread, and everything goes smooth...until we face such query.
 Then, problems start, as the docs don't prepare you for such situations (remember, those are "rare" situations). For example, developers will probably start to "fix" this using classic remedies, such as
@@ -73,7 +73,7 @@ marketed simplicity. So, to utilize Realm best, don't think of it as an object-o
 ## Invasive Types
 
 Another inconvenience with Realm is that you can't harness its performance offers unless you make 
-your code tightly coupled to their types.
+your code tightly coupled to its types.
 
 Recall that code from above:
 
