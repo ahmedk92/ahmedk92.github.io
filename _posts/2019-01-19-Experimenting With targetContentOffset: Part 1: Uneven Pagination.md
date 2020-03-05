@@ -17,7 +17,7 @@ It's worth noting that all these solutions are essentially built upon `UIScrollV
 ## Limitations
 ### 1. Page Size is Fixed
 
-A common trait among the previous solutions is the fixed page size. That is, the amount by which content is paged is always equal to the scrollView frame. If you want to have a page size different from the visible "frame", you have to seek workarounds; e.g. this clever solutions [[1](http://khanlou.com/2013/04/changing-the-size-of-a-paging-scroll-view/), [2](http://khanlou.com/2013/04/paging-a-overflowing-collection-view/)] by Khanlou.
+A common trait among the previous solutions is the fixed page size. That is, the amount by which content is paged is always equal to the scrollView frame. If you want to have a page size different from the visible "frame", you have to seek workarounds; e.g. this clever solutions [[1](http://khanlou.com/2013/04/changing-the-size-of-a-paging-scroll-view/), [2](http://khanlou.com/2013/04/paging-a-overflowing-collection-view/)] by Khanlou, or my solution using a `UICollectionView` [here](https://github.com/ahmedk92/PeekingPagedCollectionView).
 
 ### 2. Uneven Page Size
 
