@@ -107,11 +107,7 @@ class MyApplication: UIApplication {
 
 UIApplicationMain(
     CommandLine.argc,
-    UnsafeMutableRawPointer(CommandLine.unsafeArgv)
-        .bindMemory(
-            to: UnsafeMutablePointer<Int8>.self,
-            capacity: Int(CommandLine.argc)
-    ),
+    CommandLine.unsafeArgv, 
     NSStringFromClass(MyApplication.self),
     NSStringFromClass(AppDelegate.self)
 )
