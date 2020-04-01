@@ -45,7 +45,7 @@ Formatters are easy to handle as we saw. However, justified `UILabel` and `UITex
 ![Incorrect Justify Last Line]({{site.url}}/assets/incorrectjustify.png)
 
 Unlike formatters, there seems to be no explicit way to guide `UILabel` nor `UITextView` on how to force that alignment. However, there's a way to achieve the desired justifying with `NSAttributedString`.
-`NSAttributedString` (a world of its own) accepts and attribute called `paragraphStyle`. 
+`NSAttributedString` (a world of its own) accepts an attribute called `paragraphStyle`. 
 What matters to us from it is the [`baseWritingDirection`](https://developer.apple.com/documentation/uikit/nsmutableparagraphstyle/1534601-basewritingdirection?language=objc) property. We can set it to either to `NSWritingDirectionLeftToRight` or `NSWritingDirectionRightToLeft`. This affects decisions that rely on such information, namely justifying and natural alignment. Sample code:
 
 ```swift
