@@ -60,6 +60,6 @@ let attributedString = NSAttributedString(string: string, attributes: [
 ```
 
 ## Demo
-I made a demo of these problem (without the solutions). You can check it [here](https://github.com/ahmedk92/FormatterDefaults). Make sure to read the usage notes before inspecting.
+I made a demo of these problems (without the solutions). You can check it [here](https://github.com/ahmedk92/FormatterDefaults). Make sure to read the usage notes before inspecting.
 
 Thanks for reading! Corrections and suggestions are welcome.
