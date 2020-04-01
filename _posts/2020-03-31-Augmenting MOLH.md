@@ -37,6 +37,8 @@ There are some classes that must pick some locale information to correctly prese
 ### NSTextAlignmentJustified
 Formatters are easy to handle as we saw. However, justified `UILabel` and `UITextView` yield unwanted results. This is because justifying works by distributing space in every line of text so that each line starts and ends at the same start and end points respectively, **and aligning the remaining last line either left or right if it's not wide enough**. As you you may already guessed, left or right alignment is picked according to the actual app language.
 
+![Incorrect Justify Last Line]({{site.url}}/assets/incorrectjustify.png)
+
 Unlike formatters, it seems to be no explicit way to guide `UILabel` nor `UITextView` on how to force that alignment. However, there's a way to achieve the desired justifying with `NSAttributedString`.
 `NSAttributedString` (a world of its own) accepts and attribute called `paragraphStyle`. 
 What matters to us from it is the [`baseWritingDirection`](https://developer.apple.com/documentation/uikit/nsmutableparagraphstyle/1534601-basewritingdirection?language=objc) property. We can set it to either to `NSWritingDirectionLeftToRight` or `NSWritingDirectionRightToLeft`. This affects decisions that rely on such information, namely justifying and natural alignment. Sample code:
