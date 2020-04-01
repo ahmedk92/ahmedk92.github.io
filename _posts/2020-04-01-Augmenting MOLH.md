@@ -34,6 +34,11 @@ MOLH does this for all newly created views by [using the appearance proxy to set
 ### Formatters
 There are some classes that must pick some locale information to correctly present its data. Such classes include formatters (e.g. `NumberFormmatter` and `DateFormatter`). If we don't explicitly set the `locale` property of such formatters to the desired language, it will pick the actual app language, causing a date to be displayed in the wrong language for example. 
 
+```swift
+let dateFormatter = DateFormatter()
+dateFormatter.locale = Locale(identifier: "ar")
+```
+
 ### NSTextAlignmentJustified
 Formatters are easy to handle as we saw. However, justified `UILabel` and `UITextView` yield unwanted results. This is because justifying works by distributing space in every line of text so that each line starts and ends at the same start and end points respectively, **and aligning the remaining last line either left or right if it's not wide enough**. As you you may already guessed, left or right alignment is picked according to the actual app language.
 
