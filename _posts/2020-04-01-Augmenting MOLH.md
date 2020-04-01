@@ -29,7 +29,7 @@ Upon app startup, `NSBundle.mainBundle` makes up its mind **once and for all** o
 This is somewhat easier. `UIView` formally supports forcing the language direction independently of the actual app language. This is done via setting the [`semanticContentAttribute`](https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute) to the desired value.
 MOLH does this for all newly created views by [using the appearance proxy to set the suitable `semanticContentAttribute`](https://github.com/MoathOthman/MOLH/blob/313691443043f0da83502040f39b852cd9e3e0e8/Sources/MOLH/MOLH.swift#L133). This is why it needs the app to virtually "restart" (i.e. start over from the root view controller, re-creating all views).
 
-## What MOLH doesn't solve (and it shouldn't)
+## What MOLH doesn't solve (and it doesn't have to)
 
 ### Formatters
 There are some classes that must pick some locale information to correctly present its data. Such classes include formatters (e.g. `NumberFormmatter` and `DateFormatter`). If we don't explicitly set the `locale` property of such formatters to the desired language, it will pick the actual app language, causing a date to be displayed in the wrong language for example. 
