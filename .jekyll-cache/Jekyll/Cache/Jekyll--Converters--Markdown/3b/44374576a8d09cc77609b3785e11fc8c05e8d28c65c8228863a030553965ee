@@ -1,0 +1,50 @@
+I"�<p>One of the first lessons we learn in iOS development is that UIKit classes (<code class="highlighter-rouge">UILabel</code>, <code class="highlighter-rouge">UIImageView</code>, …etc) shouldn’t be touched outside the main thread. Sometimes we learn it <a href="https://stackoverflow.com/a/12927485/715593">the hard way</a>. However, <strong>this doesn’t mean we cannot do any form of rendering off the main thread</strong>.</p>
+
+<p>Classes like <code class="highlighter-rouge">NSAttributedString</code> and <code class="highlighter-rouge">UIImage</code> come with <a href="https://developer.apple.com/documentation/foundation/nsattributedstring/1531631-draw">methods</a> for drawing to a given graphics context; an <a href="https://developer.apple.com/documentation/uikit/1623912-uigraphicsbeginimagecontextwitho?language=objc">image context</a> for our use case. This doesn’t mandate being done in a particular thread. Not only this, but UIKit enables us to export what’s drawn to the current context to a bitmap image using <a href="https://developer.apple.com/documentation/uikit/1623924-uigraphicsgetimagefromcurrentima"><code class="highlighter-rouge">UIGraphicsGetImageFromCurrentImageContext</code></a>. This means we can do any complex drawing like we do with CoreGraphics in <code class="highlighter-rouge">drawRect:</code>, and then export this to a bitmap.</p>
+
+<p>All what we have to do next is to display the resulting image in our view. This is easily achieved by setting the views <a href="https://developer.apple.com/documentation/quartzcore/calayer/1410773-contents"><code class="highlighter-rouge">layer.contents</code></a> property to a <code class="highlighter-rouge">CGImage</code> representation of our image. And that’s it.</p>
+
+<h2 id="cool-but-why">Cool, but why?</h2>
+
+<p>UIKit performance is great 99% of the time. However, it’s not the best we can acheive. UIKit performance degrades noticebly when rendering large scrolling amounts of text and images with varying sizes, in addition to relying on AutoLayout for sizing. <a href="https://developer.apple.com/videos/play/wwdc2018/220">AutoLayout came along way in iOS 12</a>, but earlier iOS versions are still in support, and no matter how fast AutoLayout becomes, it still works on the main thread.</p>
+
+<p>AutoLayout is not only the slowing factor. Actual rendering and intrinsic content size calculation also happens on the main thread. I’ve profiled stuttering scrolling performances and the culprit was none other than regular text drawing invoked from <code class="highlighter-rouge">UILabel</code>’s drawing.</p>
+
+<h2 id="rendering-and-sizing">Rendering and Sizing</h2>
+
+<p>If you notice, we’re dealing with two types of problems: (1) Rendering, i.e. the graphical content we see, and (2) Sizing, i.e. what space our rendered content will consume.</p>
+
+<p>We talked about rendering methods above. If you notice, those rendering methods rely on a <code class="highlighter-rouge">CGRect</code> input, that is the bounding box of the graphical content. So, this implies a prior sizing step. Sizing images is usually easy; as we know beforehand where it would appear, and at what size. Text may be a bit trickier; as we usually fix a dimension (width or height) then let the text flow with respect to the desired alignment, consuming space depending on the font and other text attributes. Fortunately, there are more than one way to calculate bounding rectangles for attributed strings. The simplest method is <code class="highlighter-rouge">NSAttributedString</code>’s <a href="https://developer.apple.com/documentation/foundation/nsstring/1524729-boundingrect">boundingRect</a>. Other ways involve utilizing <code class="highlighter-rouge">NSLayoutManager</code>, <code class="highlighter-rouge">NSTextContainer</code>, and <code class="highlighter-rouge">NSTextStorage</code> trio for advanced text layout.</p>
+
+<h2 id="a-simple-demo">A Simple Demo</h2>
+
+<p>I made a very <a href="https://github.com/ahmedk92/PrerenderingDemo">simplistic demo</a> that showcases the gains in a scrolling use case. Notice the regular implementation (left) stutters on fast scrolling, while the prerendered implementation (right) scrolls like the wind. One cost is to engineer when to pre-load the pre-rendered conent. I went with an inefficient way for the sake of simplicity (i.e. loading all beforehand). This is a real cost for such approach.</p>
+
+<h2 id="where-to-go-from-here">Where to go from here?</h2>
+
+<p>I’m just exploring this technique myself. It’s not something new. There are already amazing libraries which adopt this approach; namely Ryan Nystrom’s <a href="https://github.com/GitHawkApp/StyledTextKit">StyledTextKit</a>, and <a href="https://texturegroup.org">Texture</a> (AsyncDisplayKit).</p>
+
+<h2 id="notes">Notes</h2>
+
+<ul>
+  <li>When using <code class="highlighter-rouge">UIGraphicsBeginImageContextWithOptions</code>, take some notes:
+    <ul>
+      <li>The third parameter is the scale at which the bitmap is generated. A zero values picks the device’s scale (i.e. 2x, 3x). This helpful in emulating vector drawing behavior in zoomable views by redrawing content at a higher scale (e.g. device scale * zoom scale).</li>
+      <li>Don’t forget to call <code class="highlighter-rouge">UIGraphicsEndImageContext</code> after done dealing with the image context. This is to clean up memory. This approach can use memory extensively, it’s a really important step.</li>
+      <li>The second parameter is whether to draw opaquely or transparent. If you know that your view is going to be not transparent, it’s good to set this to true, as transparency is a computationally expensive task. See this <a href="https://developer.apple.com/videos/play/wwdc2012/506/">WWDC session at 29:28 mark</a>.</li>
+    </ul>
+  </li>
+  <li>
+    <p>Use a serial <code class="highlighter-rouge">DispatchQueue</code> instead of a gloabl queue if you’re going to render multiple views in series, or group them in a single block to be executed in a global queue. Anyways don’t execute each block individually in a gobal queue. This to avoid creating more threads than CPU can handle; what’s called “Thread Explosion”. See this <a href="https://developer.apple.com/videos/play/wwdc2018/219/?time=1002">WWDC talk at 16:42 mark</a>.</p>
+  </li>
+  <li>When using <code class="highlighter-rouge">NSAttributedString</code>’s boundingRect:
+    <ul>
+      <li>You have to use an <code class="highlighter-rouge">NSAttributedString</code> instance with at least <code class="highlighter-rouge">.font</code> and <code class="highlighter-rouge">.foregroundColor</code> attributes set, or else it won’t give correct results.</li>
+      <li>The first <code class="highlighter-rouge">CGSize</code> parameter it takes marks what constrained dimension it expects, and what other dimension to compute. For example, to emulate the behaviour of a <code class="highlighter-rouge">UILabel</code> with <code class="highlighter-rouge">numberOfLines</code> set to 0, you provide a fixed width, and a height value of <code class="highlighter-rouge">.greatestFiniteMagnitude</code>. <a href="https://github.com/ahmedk92/PrerenderingDemo/blob/a17dddf3bf609344499056c1b52e16bee40bf3ee/PrerenderingDemo/LabelModel.swift#L31">Example</a>.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="update-06-09-2019">Update (06-09-2019)</h2>
+<p>This made its way to a talk at a <a href="https://twitter.com/SwiftCairo">SwiftCairo</a> meet-up. You can find the slides and a sample code <a href="https://github.com/ahmedk92/AsyncDrawing">here</a>.</p>
+:ET

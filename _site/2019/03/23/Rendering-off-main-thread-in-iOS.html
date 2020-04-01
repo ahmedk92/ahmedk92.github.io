@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Rendering off Main Thread in iOS</title>
+  <meta name="description" content="One of the first lessons we learn in iOS development is that UIKit classes (UILabel, UIImageView, …etc) shouldn’t be touched outside the main thread. Sometim...">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="http://localhost:4000/2019/03/23/Rendering-off-main-thread-in-iOS.html">
+  <link rel="alternate" type="application/rss+xml" title="Ahmed Khalaf" href="http://localhost:4000/feed.xml">
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">Ahmed Khalaf</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Rendering off Main Thread in iOS</h1>
+    <p class="post-meta"><time datetime="2019-03-23T11:26:00+02:00" itemprop="datePublished">Mar 23, 2019</time></p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>One of the first lessons we learn in iOS development is that UIKit classes (<code class="highlighter-rouge">UILabel</code>, <code class="highlighter-rouge">UIImageView</code>, …etc) shouldn’t be touched outside the main thread. Sometimes we learn it <a href="https://stackoverflow.com/a/12927485/715593">the hard way</a>. However, <strong>this doesn’t mean we cannot do any form of rendering off the main thread</strong>.</p>
+
+<p>Classes like <code class="highlighter-rouge">NSAttributedString</code> and <code class="highlighter-rouge">UIImage</code> come with <a href="https://developer.apple.com/documentation/foundation/nsattributedstring/1531631-draw">methods</a> for drawing to a given graphics context; an <a href="https://developer.apple.com/documentation/uikit/1623912-uigraphicsbeginimagecontextwitho?language=objc">image context</a> for our use case. This doesn’t mandate being done in a particular thread. Not only this, but UIKit enables us to export what’s drawn to the current context to a bitmap image using <a href="https://developer.apple.com/documentation/uikit/1623924-uigraphicsgetimagefromcurrentima"><code class="highlighter-rouge">UIGraphicsGetImageFromCurrentImageContext</code></a>. This means we can do any complex drawing like we do with CoreGraphics in <code class="highlighter-rouge">drawRect:</code>, and then export this to a bitmap.</p>
+
+<p>All what we have to do next is to display the resulting image in our view. This is easily achieved by setting the views <a href="https://developer.apple.com/documentation/quartzcore/calayer/1410773-contents"><code class="highlighter-rouge">layer.contents</code></a> property to a <code class="highlighter-rouge">CGImage</code> representation of our image. And that’s it.</p>
+
+<h2 id="cool-but-why">Cool, but why?</h2>
+
+<p>UIKit performance is great 99% of the time. However, it’s not the best we can acheive. UIKit performance degrades noticebly when rendering large scrolling amounts of text and images with varying sizes, in addition to relying on AutoLayout for sizing. <a href="https://developer.apple.com/videos/play/wwdc2018/220">AutoLayout came along way in iOS 12</a>, but earlier iOS versions are still in support, and no matter how fast AutoLayout becomes, it still works on the main thread.</p>
+
+<p>AutoLayout is not only the slowing factor. Actual rendering and intrinsic content size calculation also happens on the main thread. I’ve profiled stuttering scrolling performances and the culprit was none other than regular text drawing invoked from <code class="highlighter-rouge">UILabel</code>’s drawing.</p>
+
+<h2 id="rendering-and-sizing">Rendering and Sizing</h2>
+
+<p>If you notice, we’re dealing with two types of problems: (1) Rendering, i.e. the graphical content we see, and (2) Sizing, i.e. what space our rendered content will consume.</p>
+
+<p>We talked about rendering methods above. If you notice, those rendering methods rely on a <code class="highlighter-rouge">CGRect</code> input, that is the bounding box of the graphical content. So, this implies a prior sizing step. Sizing images is usually easy; as we know beforehand where it would appear, and at what size. Text may be a bit trickier; as we usually fix a dimension (width or height) then let the text flow with respect to the desired alignment, consuming space depending on the font and other text attributes. Fortunately, there are more than one way to calculate bounding rectangles for attributed strings. The simplest method is <code class="highlighter-rouge">NSAttributedString</code>’s <a href="https://developer.apple.com/documentation/foundation/nsstring/1524729-boundingrect">boundingRect</a>. Other ways involve utilizing <code class="highlighter-rouge">NSLayoutManager</code>, <code class="highlighter-rouge">NSTextContainer</code>, and <code class="highlighter-rouge">NSTextStorage</code> trio for advanced text layout.</p>
+
+<h2 id="a-simple-demo">A Simple Demo</h2>
+
+<p>I made a very <a href="https://github.com/ahmedk92/PrerenderingDemo">simplistic demo</a> that showcases the gains in a scrolling use case. Notice the regular implementation (left) stutters on fast scrolling, while the prerendered implementation (right) scrolls like the wind. One cost is to engineer when to pre-load the pre-rendered conent. I went with an inefficient way for the sake of simplicity (i.e. loading all beforehand). This is a real cost for such approach.</p>
+
+<h2 id="where-to-go-from-here">Where to go from here?</h2>
+
+<p>I’m just exploring this technique myself. It’s not something new. There are already amazing libraries which adopt this approach; namely Ryan Nystrom’s <a href="https://github.com/GitHawkApp/StyledTextKit">StyledTextKit</a>, and <a href="https://texturegroup.org">Texture</a> (AsyncDisplayKit).</p>
+
+<h2 id="notes">Notes</h2>
+
+<ul>
+  <li>When using <code class="highlighter-rouge">UIGraphicsBeginImageContextWithOptions</code>, take some notes:
+    <ul>
+      <li>The third parameter is the scale at which the bitmap is generated. A zero values picks the device’s scale (i.e. 2x, 3x). This helpful in emulating vector drawing behavior in zoomable views by redrawing content at a higher scale (e.g. device scale * zoom scale).</li>
+      <li>Don’t forget to call <code class="highlighter-rouge">UIGraphicsEndImageContext</code> after done dealing with the image context. This is to clean up memory. This approach can use memory extensively, it’s a really important step.</li>
+      <li>The second parameter is whether to draw opaquely or transparent. If you know that your view is going to be not transparent, it’s good to set this to true, as transparency is a computationally expensive task. See this <a href="https://developer.apple.com/videos/play/wwdc2012/506/">WWDC session at 29:28 mark</a>.</li>
+    </ul>
+  </li>
+  <li>
+    <p>Use a serial <code class="highlighter-rouge">DispatchQueue</code> instead of a gloabl queue if you’re going to render multiple views in series, or group them in a single block to be executed in a global queue. Anyways don’t execute each block individually in a gobal queue. This to avoid creating more threads than CPU can handle; what’s called “Thread Explosion”. See this <a href="https://developer.apple.com/videos/play/wwdc2018/219/?time=1002">WWDC talk at 16:42 mark</a>.</p>
+  </li>
+  <li>When using <code class="highlighter-rouge">NSAttributedString</code>’s boundingRect:
+    <ul>
+      <li>You have to use an <code class="highlighter-rouge">NSAttributedString</code> instance with at least <code class="highlighter-rouge">.font</code> and <code class="highlighter-rouge">.foregroundColor</code> attributes set, or else it won’t give correct results.</li>
+      <li>The first <code class="highlighter-rouge">CGSize</code> parameter it takes marks what constrained dimension it expects, and what other dimension to compute. For example, to emulate the behaviour of a <code class="highlighter-rouge">UILabel</code> with <code class="highlighter-rouge">numberOfLines</code> set to 0, you provide a fixed width, and a height value of <code class="highlighter-rouge">.greatestFiniteMagnitude</code>. <a href="https://github.com/ahmedk92/PrerenderingDemo/blob/a17dddf3bf609344499056c1b52e16bee40bf3ee/PrerenderingDemo/LabelModel.swift#L31">Example</a>.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="update-06-09-2019">Update (06-09-2019)</h2>
+<p>This made its way to a talk at a <a href="https://twitter.com/SwiftCairo">SwiftCairo</a> meet-up. You can find the slides and a sample code <a href="https://github.com/ahmedk92/AsyncDrawing">here</a>.</p>
+
+  </div>
+
+</article>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Ahmed Khalaf</h2>
+
+    <div class="footer-col-wrapper">
+<!-- 
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>Ahmed Khalaf</li>
+          <li><a href="mailto:"></a></li>
+        </ul>
+      </div>
+ -->
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/ahmedk92"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">ahmedk92</span></a>
+
+          </li>
+          
+
+          
+          <li>
+            <a href="https://twitter.com/ahmedkhalaf_92"><span class="icon icon--twitter"><svg viewBox="0 0 16 16"><path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/></svg>
+</span><span class="username">ahmedkhalaf_92</span></a>
+
+          </li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

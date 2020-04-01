@@ -1,0 +1,97 @@
+I"�"<h2 id="introduction">Introduction</h2>
+
+<p>There are at least three ways of paginating content in iOS. Namely, via <code class="highlighter-rouge">UIScrollView</code>, <code class="highlighter-rouge">UIPageViewController</code>, and <code class="highlighter-rouge">UICollectionView</code>.</p>
+
+<p>For simplicity, I’ll consider only horizontal pagination from now on in this post.</p>
+
+<p><code class="highlighter-rouge">UIPageViewController</code> paginates its contents by setting its <code class="highlighter-rouge">transitionStyle</code> property to <code class="highlighter-rouge">.scroll</code>. <code class="highlighter-rouge">UIScrollView</code> and <code class="highlighter-rouge">UICollectionView</code> paginate their content by setting their <code class="highlighter-rouge">isPagingEnabled</code> property to <code class="highlighter-rouge">true</code>.</p>
+
+<p>It’s worth noting that all these solutions are essentially built upon <code class="highlighter-rouge">UIScrollView</code>. <code class="highlighter-rouge">UIPageViewController</code> uses a special <code class="highlighter-rouge">UIScrollView</code> subclass (private API I think) called <code class="highlighter-rouge">_UIQueuingScrollView</code>. <code class="highlighter-rouge">UICollectionView</code> is a <code class="highlighter-rouge">UIScrollView</code> subclass.</p>
+
+<h2 id="limitations">Limitations</h2>
+<h3 id="1-page-size-is-fixed">1. Page Size is Fixed</h3>
+
+<p>A common trait among the previous solutions is the fixed page size. That is, the amount by which content is paged is always equal to the scrollView frame. If you want to have a page size different from the visible “frame”, you have to seek workarounds; e.g. this clever solutions [<a href="http://khanlou.com/2013/04/changing-the-size-of-a-paging-scroll-view/">1</a>, <a href="http://khanlou.com/2013/04/paging-a-overflowing-collection-view/">2</a>] by Khanlou, or my solution using a <code class="highlighter-rouge">UICollectionView</code> <a href="https://github.com/ahmedk92/PeekingPagedCollectionView">here</a>.</p>
+
+<h3 id="2-uneven-page-size">2. Uneven Page Size</h3>
+
+<p>Another limitation is if you want more than a page size in a single flow. For example, when your flow can be considered a series of pairs, where each pair of pages are separated by a constant spacing, while each item of each pair is separated by a different amount of spacing. I think this is impossible to work around with the above solutions.</p>
+
+<p><img src="http://localhost:4000/assets/uneven1.png" alt="uneven1" /></p>
+
+<p><img src="http://localhost:4000/assets/uneven2.png" alt="uneven2" /></p>
+
+<p>One can think of having more than one level of pagination to fix this. For example:</p>
+
+<ol>
+  <li>A <code class="highlighter-rouge">UIPageViewController</code> for the pairs, while each pair is a <code class="highlighter-rouge">UIpageViewController</code> itself.</li>
+  <li>A <code class="highlighter-rouge">UICollectionView</code> for the pairs, while each pair is a <code class="highlighter-rouge">UICollectionView</code> itself.</li>
+  <li>Similar thing with raw <code class="highlighter-rouge">UIScrollView</code>.</li>
+</ol>
+
+<p>However, these solutions have problems.</p>
+
+<ol>
+  <li>
+    <p>For the nested <code class="highlighter-rouge">UIPageViewController</code> it’s so easy to swipe an entire pair while not noticing. This is because the outer and the inner <code class="highlighter-rouge">UIPageViewController</code>s have contentSize greater than the visible frame (since <code class="highlighter-rouge">UIPageViewController</code> always loads 3 pages if possible (left, center, right)). So, any pan gesture can both affect any of them.</p>
+  </li>
+  <li>
+    <p>Similar thing can happen too with nested <code class="highlighter-rouge">UICollectionView</code>s. However, it can be worked around by disabling prefetching on the outer <code class="highlighter-rouge">UICollectionView</code>. This way, the outer <code class="highlighter-rouge">UICollectionView</code> only loads one cell (pair cell), while the pair cell can load its full content; so the pan gesture would work fine with inner <code class="highlighter-rouge">UICollectionView</code> as expected. However, on fast scrolling, this seems to not work; and pairs are again skipped.</p>
+  </li>
+</ol>
+
+<h2 id="scrollviewwillenddragging_withvelocitytargetcontentoffset-has-something-to-say"><code class="highlighter-rouge">scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)</code> has something to say</h2>
+
+<p><code class="highlighter-rouge">UIScrollViewDelegate</code> has this interesting method that is called when the user ends dragging. It reports the velocity by which the user did their swipe, and (which is our focus) passes the expected content offset at which the scrollView would stop! So clever! And there’s more to it. It’s possible to change that expected offset so the scrollView smoothly stops at a desired position!</p>
+
+<p>So, knowing this, we can “snap” the decelerating scrollView to a position of our choice, so there is a chance to solve our uneven page size problem.</p>
+
+<h3 id="idea">Idea</h3>
+
+<p>(Using a <code class="highlighter-rouge">UICollectionView</code> of pairs, where each cell is a pair of <code class="highlighter-rouge">UIView</code> subclass)</p>
+
+<p>Given an item width equal to the visible frame. Each pair of items are separated by 50 pts of space on each side. We can:</p>
+
+<ol>
+  <li>
+    <p>We can partition of content into a series of evenly sized pairs (including spacing). That is, each pair width = item width * 2 + spacing (25 pts at each side).</p>
+  </li>
+  <li>
+    <p>When <code class="highlighter-rouge">scrollViewWillEndDragging</code> is called, we can inspect the <code class="highlighter-rouge">targetContentOffset</code> and see at what index of pairs that offset value should correspond. Such index can be achieved by dividing (integer division) the value of the <code class="highlighter-rouge">targetContentOffset</code> by the pair width.</p>
+  </li>
+  <li>
+    <p>Note that <code class="highlighter-rouge">targetContentOffset</code> always points to the leftmost of the screen. This causes a bias to the left side of scrolling, so that way, integer division would be inclined to get lesser indices; 1 is more likely to come than 2, 2 is more likely to come than 3, and so on… One way to overcome this is to offset the <code class="highlighter-rouge">targetContentOffset</code> a little to balance this bias; making it points to the middle of the screen rather than it leftmost edge. To achieve this, just add half of the visible frame width to the <code class="highlighter-rouge">targetContentOffset</code> before integer division.</p>
+  </li>
+  <li>
+    <p>Now we have a correct index of a pair. We only have to decide which part of the pair we want to snap to. So, the sizes of each part of the pair should be known to us. That way we can decide which part is close to the adjusted <code class="highlighter-rouge">targetContentOffset</code> calculated above (adjusted to the middle of visible frame). And that’s it. Now finally alter the value <code class="highlighter-rouge">targetContentOffset</code> to achieve our desired effect, e.g.: <code class="highlighter-rouge">targetContentOffset.pointee.x = rightItemX</code>.</p>
+  </li>
+</ol>
+
+<p>Notes:</p>
+
+<ol>
+  <li>
+    <p>We don’t use <code class="highlighter-rouge">isPagingEnabled</code> here; we use normal scrolling. The default decelaration rate may be too slow; so setting the <code class="highlighter-rouge">UICollectionView</code>’s <code class="highlighter-rouge">decelerationRate</code> to <code class="highlighter-rouge">.fast</code> should do it.</p>
+  </li>
+  <li>
+    <p>We have to inset the <code class="highlighter-rouge">UICollectionView</code> by half the spacing at each side to achieve contentSize multiple to that of pair width.</p>
+  </li>
+  <li>
+    <p>Large swipes may cause jumping over a page. This avoidable by clamping the amount by which the <code class="highlighter-rouge">targetContentOffset</code> changes. It may also appear as a feature not a defect. 😄</p>
+  </li>
+  <li>
+    <p>Very weak swipes that are not enough to make a page change caused a choppy animation. I mitigated this by detecting it (non-zero velcoity, same <code class="highlighter-rouge">targetContentOffset</code>) then setting the content offset with an animation.</p>
+  </li>
+</ol>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Here is a <a href="https://github.com/ahmedk92/UnevenPagination">demo in Swift</a> that implements what’s above.</p>
+
+<p>Although the solution presented here may not be perfect, it’s the best I could come up with. It’s a tricky problem that I hadn’t find a complete solution for it so far.</p>
+
+<p>For questions, and suggestions please contact me via Twitter, or submit a pull request on the linked Github demo.</p>
+
+<p>Thanks for reading!</p>
+
+:ET

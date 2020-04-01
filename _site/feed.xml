@@ -1,89 +1,834 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Blog</title>
+    <title>Ahmed Khalaf</title>
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Fri, 15 Dec 2017 20:57:16 +0200</pubDate>
-    <lastBuildDate>Fri, 15 Dec 2017 20:57:16 +0200</lastBuildDate>
-    <generator>Jekyll v3.6.2</generator>
+    <pubDate>Wed, 01 Apr 2020 23:38:47 +0200</pubDate>
+    <lastBuildDate>Wed, 01 Apr 2020 23:38:47 +0200</lastBuildDate>
+    <generator>Jekyll v4.0.0</generator>
     
       <item>
-        <title>Acheiving Dynamic Localisation in iOS</title>
-        <description>&lt;p&gt;While you can make your app support multiple languages, still there’s no easy (and documented) way to dynamically change the app’s localisation. You either let the user chose the iOS device’s language; and your app just follows along. Or you can use that &lt;a href=&quot;https://stackoverflow.com/q/1669645/715593&quot;&gt;AppleLanguages solution&lt;/a&gt;. But if you want the change somewhere after the app has started (i.e. not in the &lt;code class=&quot;highlighter-rouge&quot;&gt;main&lt;/code&gt; function), you have to close the app, and wait for the user to open it again. Which is not the best we can expect.&lt;/p&gt;
+        <title>Augmenting MOLH</title>
+        <description>&lt;p&gt;&lt;a href=&quot;https://github.com/MoathOthman/MOLH/&quot;&gt;MOLH&lt;/a&gt; is a popular library among developers whose audience are of Arabic background. It’s common for Arabic apps to support multiple languages, and also &lt;strong&gt;support changing between them without restarting&lt;/strong&gt;. I wrote &lt;a href=&quot;/2017/12/15/Acheiving-Dynamic-Localisation-in-iOS.html&quot;&gt;here&lt;/a&gt; how iOS doesn’t support that out-of-the-box and what were the possible workarounds back-then (this was a write-up for a solution I reached before MOLH was made public).
+In this article I’ll try to briefly reiterate how MOLH works to reach to its limitation, and then try to find some solutions/workarounds.&lt;/p&gt;
 
-&lt;h2 id=&quot;alternatives&quot;&gt;Alternatives&lt;/h2&gt;
-&lt;p&gt;There are many libraries (on cocoapods for example) that enables you to acheive that without closing the app. But they just work on strings; either an &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; replacement, or overriding its behaviour. Which is good, but unfortunately ignore flipping views on RTL languages like Arabic.&lt;/p&gt;
+&lt;p&gt;Before we start, these limitations are not specific to MOLH; it’s rather general to any approach that tries to work around iOS’s limitation to change the app’s language without restarting.&lt;/p&gt;
 
-&lt;h3 id=&quot;what-worked-for-me&quot;&gt;What worked for me&lt;/h3&gt;
-&lt;p&gt;To organize, we have two problems: (1) flipping views based on the chosen language direction preference. (2) Guiding &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; to use the correct strings.&lt;/p&gt;
+&lt;h2 id=&quot;how-molh-works&quot;&gt;How MOLH works&lt;/h2&gt;
 
-&lt;h3 id=&quot;1-flipping-views&quot;&gt;(1) Flipping views&lt;/h3&gt;
-&lt;p&gt;Since iOS 9, there’s this property that enables you to decide, for a view, wether it should be always displayed left-to-right, or right-to-left (despite whatever is the language), or it should follow the language. The property is &lt;a href=&quot;https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute&quot;&gt;semanticContentAttribute&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;(Feel free to skip this section if you already know how MOLH works)&lt;/p&gt;
 
-&lt;p&gt;Now, the question is when to set that property to take its effect? and how? Usually, UI is diversely created; maybe from storyboards, XIBs, or code. So, an early point of initialization is a good time; e.g. &lt;code class=&quot;highlighter-rouge&quot;&gt;initWithCoder:&lt;/code&gt; (for views designed in Interface Builder) or &lt;code class=&quot;highlighter-rouge&quot;&gt;iniWithFrame&lt;/code&gt; (for views created by code). &lt;code class=&quot;highlighter-rouge&quot;&gt;awakeFromNib&lt;/code&gt; is a good time too for views designed in Interface Builder. OK, but how would we override those methods? &lt;a href=&quot;http://nshipster.com/method-swizzling/&quot;&gt;Swizzling&lt;/a&gt; to the rescue.&lt;/p&gt;
+&lt;p&gt;Two aspects of an app reflects to the user that it respects the desired localization: the language of the texts, and the direction of how the flow of the views (left-to-right or right-to-left).
+As you may already know, the default behavior of iOS is to pick and suitable language at startup (of the app) and upon that it picks the relevant strings from string files in that language’s &lt;code class=&quot;highlighter-rouge&quot;&gt;lproj&lt;/code&gt; folder, as well as applying the corresponding language direction, &lt;strong&gt;and sticks to that&lt;/strong&gt;.&lt;/p&gt;
 
-&lt;p&gt;Through swizzling, we can check the language in &lt;code class=&quot;highlighter-rouge&quot;&gt;awakeFromNib&lt;/code&gt; for example, and set the relevant &lt;code class=&quot;highlighter-rouge&quot;&gt;semanticContentAttribute&lt;/code&gt;. Good!, but there may be a little caveat. There may be some views that are required to be always left-to-right or righ-to-left all the time; we don’t want to mess them up. We can avoid that by a simple check; we only apply the &lt;code class=&quot;highlighter-rouge&quot;&gt;semanticContentAttribute&lt;/code&gt; to views with an &lt;code class=&quot;highlighter-rouge&quot;&gt;.unspecified&lt;/code&gt; value.&lt;/p&gt;
+&lt;p&gt;Two goals here:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Guiding &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; to search the new language folder (i..e &lt;code class=&quot;highlighter-rouge&quot;&gt;ar.lproj&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;en.lproj&lt;/code&gt;, …etc)&lt;/li&gt;
+  &lt;li&gt;Forcing new views to flip (or not) with respect to the new language.&lt;/li&gt;
+&lt;/ol&gt;
 
-&lt;p&gt;So far so good. But what about currently visible views? what can we do about them? One can think of making every visible view observe the language change (via &lt;code class=&quot;highlighter-rouge&quot;&gt;NSNotificationCenter&lt;/code&gt; for example), then try to force a redraw. But I don’t like this approach, and I prefer to simply restart the flow of my app. That is re-assigning the window’s root view controller with a new one, and start over the app’s flow. Something like this:&lt;/p&gt;
+&lt;h3 id=&quot;1-nslocalizedstring&quot;&gt;(1) NSLocalizedString&lt;/h3&gt;
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; delegates to &lt;code class=&quot;highlighter-rouge&quot;&gt;NSBundle.mainBundle&lt;/code&gt; for getting the suitable localized string value.
+Upon app startup, &lt;code class=&quot;highlighter-rouge&quot;&gt;NSBundle.mainBundle&lt;/code&gt; makes up its mind &lt;strong&gt;once and for all&lt;/strong&gt; on what language folder it’s going to search till the next run. To overcome this limitation, MOLH &lt;a href=&quot;https://github.com/MoathOthman/MOLH/blob/313691443043f0da83502040f39b852cd9e3e0e8/Sources/MOLH/MOLH.swift#L184&quot;&gt;swizzles the main bundle&lt;/a&gt; and dynamically loads the relevant bundle to search for the required string.&lt;/p&gt;
 
-&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIApplication&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shared&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rootViewController&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;view&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;subviews&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;view&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;removeFromSuperView&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;UIApplication&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shared&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rootViewController&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIApplication&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shared&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rootViewController&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;storyBoard&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;instantiateInitialViewController&lt;/span&gt; 
-&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;That’s it. And it works nicely.&lt;/p&gt;
+&lt;h3 id=&quot;2-flipping-views&quot;&gt;(2) Flipping views&lt;/h3&gt;
+&lt;p&gt;This is somewhat easier. &lt;code class=&quot;highlighter-rouge&quot;&gt;UIView&lt;/code&gt; formally supports forcing the language direction independently of the actual app language. This is done via setting the &lt;a href=&quot;https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;semanticContentAttribute&lt;/code&gt;&lt;/a&gt; to the desired value.
+MOLH does this for all newly created views by &lt;a href=&quot;https://github.com/MoathOthman/MOLH/blob/313691443043f0da83502040f39b852cd9e3e0e8/Sources/MOLH/MOLH.swift#L133&quot;&gt;using the appearance proxy to set the suitable &lt;code class=&quot;highlighter-rouge&quot;&gt;semanticContentAttribute&lt;/code&gt;&lt;/a&gt;. This is why it needs the app to virtually “restart” (i.e. start over from the root view controller, re-creating all views).&lt;/p&gt;
 
-&lt;h3 id=&quot;2-nslocalizedstring&quot;&gt;(2) NSLocalizedString&lt;/h3&gt;
-&lt;p&gt;As mentioned above, there are many libraries that do this. Most of them offer a replacement for &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt;. But sometimes, the dynamic localiztation feature is required so late in the project life-time that &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; is scattered all over the project. So, overriding its behavior would be better. I heard about a library that does this, but couldn’t find it 😑. However, that overriding is not hard.&lt;/p&gt;
+&lt;h2 id=&quot;what-molh-doesnt-solve-and-it-doesnt-have-to&quot;&gt;What MOLH doesn’t solve (and it doesn’t have to)&lt;/h2&gt;
 
-&lt;p&gt;I built my solution on &lt;a href=&quot;https://stackoverflow.com/a/20257557/715593&quot;&gt;this StackOverflow answer&lt;/a&gt;. The whole discussion is useful. The idea is that &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLocalizedString&lt;/code&gt; is just a macro that uses &lt;code class=&quot;highlighter-rouge&quot;&gt;localizedStringForKey:value:table:&lt;/code&gt; method of the &lt;code class=&quot;highlighter-rouge&quot;&gt;NSBundle&lt;/code&gt; class; specifically on &lt;code class=&quot;highlighter-rouge&quot;&gt;[NSBundle mainBundle]&lt;/code&gt; instance. So, swizzling is again used here. In short, the &lt;code class=&quot;highlighter-rouge&quot;&gt;[NSBundle mainBundle]&lt;/code&gt; instance’s implementation is replaced by an &lt;code class=&quot;highlighter-rouge&quot;&gt;NSBundle&lt;/code&gt; subclass that, on language change, makes the &lt;code class=&quot;highlighter-rouge&quot;&gt;[NSBundle mainBundle]&lt;/code&gt; return a new bundle that is relevant to the selected language. Easy, but tricky.&lt;/p&gt;
+&lt;h3 id=&quot;formatters&quot;&gt;Formatters&lt;/h3&gt;
+&lt;p&gt;There are some classes that must pick some locale information to correctly present its data. Such classes include formatters (e.g. &lt;code class=&quot;highlighter-rouge&quot;&gt;NumberFormmatter&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;DateFormatter&lt;/code&gt;). If we don’t explicitly set the &lt;code class=&quot;highlighter-rouge&quot;&gt;locale&lt;/code&gt; property of such formatters to the desired language, it will pick the actual app language, causing a date to be displayed in the wrong language for example.&lt;/p&gt;
 
-&lt;p&gt;That’s it.&lt;/p&gt;
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;dateFormatter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DateFormatter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;dateFormatter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;locale&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Locale&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;identifier&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;ar&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h3 id=&quot;notes&quot;&gt;Notes&lt;/h3&gt;
-&lt;ul&gt;
-  &lt;li&gt;Maybe it won’t be enough to just have the views flipped; you may want text views (e.g. &lt;code class=&quot;highlighter-rouge&quot;&gt;UILabel&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;UITextField&lt;/code&gt;) to flip the text alignment too. That’s acheivable in our same &lt;code class=&quot;highlighter-rouge&quot;&gt;awakeFromNib&lt;/code&gt; implementation explained above. All you need is checking wether the current view is a &lt;code class=&quot;highlighter-rouge&quot;&gt;UILabel&lt;/code&gt;, then repeat the same logic; check wether the text alignment (&lt;code class=&quot;highlighter-rouge&quot;&gt;NSTextAlignment&lt;/code&gt;) is set to &lt;code class=&quot;highlighter-rouge&quot;&gt;.natural&lt;/code&gt;, then set to the correct alignment (i.e. &lt;code class=&quot;highlighter-rouge&quot;&gt;.left&lt;/code&gt;, or &lt;code class=&quot;highlighter-rouge&quot;&gt;.right&lt;/code&gt;).&lt;/li&gt;
-&lt;/ul&gt;
+&lt;h3 id=&quot;nstextalignmentjustified&quot;&gt;NSTextAlignmentJustified&lt;/h3&gt;
+&lt;p&gt;Formatters are easy to handle as we saw. However, justified &lt;code class=&quot;highlighter-rouge&quot;&gt;UILabel&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;UITextView&lt;/code&gt; yield unwanted results. This is because justifying works by distributing space in every line of text so that each line starts and ends at the same start and end points respectively, &lt;strong&gt;and aligning the remaining last line either left or right if it’s not wide enough&lt;/strong&gt;. As you you may already guessed, left or right alignment is picked according to the actual app language.&lt;/p&gt;
 
+&lt;p&gt;&lt;img src=&quot;http://localhost:4000/assets/incorrectjustify.png&quot; alt=&quot;Incorrect Justify Last Line&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Unlike formatters, there seems to be no explicit way to guide &lt;code class=&quot;highlighter-rouge&quot;&gt;UILabel&lt;/code&gt; nor &lt;code class=&quot;highlighter-rouge&quot;&gt;UITextView&lt;/code&gt; on how to force that alignment. However, there’s a way to achieve the desired justifying with &lt;code class=&quot;highlighter-rouge&quot;&gt;NSAttributedString&lt;/code&gt;.
+&lt;code class=&quot;highlighter-rouge&quot;&gt;NSAttributedString&lt;/code&gt; (a world of its own) accepts an attribute called &lt;code class=&quot;highlighter-rouge&quot;&gt;paragraphStyle&lt;/code&gt;. 
+What matters to us from it is the &lt;a href=&quot;https://developer.apple.com/documentation/uikit/nsmutableparagraphstyle/1534601-basewritingdirection?language=objc&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;baseWritingDirection&lt;/code&gt;&lt;/a&gt; property. We can set it to either to &lt;code class=&quot;highlighter-rouge&quot;&gt;NSWritingDirectionLeftToRight&lt;/code&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;NSWritingDirectionRightToLeft&lt;/code&gt;. This affects decisions that rely on such information, namely justifying and natural alignment. Sample code:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;attributedString&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;NSAttributedString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;attributes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;paragraphStyle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;NSMutableParagraphStyle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;alignment&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;justified&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;baseWritingDirection&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rightToLeft&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;style&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;demo&quot;&gt;Demo&lt;/h2&gt;
+&lt;p&gt;I made a demo of these problems (without the solutions). You can check it &lt;a href=&quot;https://github.com/ahmedk92/FormatterDefaults&quot;&gt;here&lt;/a&gt;. Make sure to read the usage notes before inspecting.&lt;/p&gt;
+
+&lt;p&gt;Thanks for reading! Corrections and suggestions are welcome.&lt;/p&gt;
 </description>
-        <pubDate>Fri, 15 Dec 2017 09:00:00 +0200</pubDate>
-        <link>http://localhost:4000/2017/12/15/Acheiving-Dynamic-Localisation-in-iOS.html</link>
-        <guid isPermaLink="true">http://localhost:4000/2017/12/15/Acheiving-Dynamic-Localisation-in-iOS.html</guid>
+        <pubDate>Wed, 01 Apr 2020 10:34:00 +0200</pubDate>
+        <link>http://localhost:4000/2020/04/01/Augmenting-MOLH.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2020/04/01/Augmenting-MOLH.html</guid>
         
         
       </item>
     
       <item>
-        <title>WKWebView Horizontal Paging</title>
-        <description>&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;UIWebView&lt;/code&gt; had a helpful property named &lt;code class=&quot;highlighter-rouge&quot;&gt;paginationMode&lt;/code&gt;. It gave you horizontal pagination out of the box; specifically using the values: &lt;code class=&quot;highlighter-rouge&quot;&gt;leftToRight&lt;/code&gt;, and &lt;code class=&quot;highlighter-rouge&quot;&gt;rightToLeft&lt;/code&gt;. However, &lt;code class=&quot;highlighter-rouge&quot;&gt;UIWebView&lt;/code&gt; is going out of favor, and since iOS 8, Apple officially encourages using &lt;code class=&quot;highlighter-rouge&quot;&gt;WKWebView&lt;/code&gt;. Unfortunately, &lt;code class=&quot;highlighter-rouge&quot;&gt;WKWebView&lt;/code&gt; doesn’t have that property nor its equivalent out of the box.&lt;/p&gt;
+        <title>Thoughts on Realm</title>
+        <description>&lt;p&gt;Realm is a popular persistence solution, and I really like it a lot.
+Because of its ease of use, many - including me - prefer it over Core Data.
+However, it has some surprises and limitations.
+Here I discuss some of them.&lt;/p&gt;
 
-&lt;p&gt;Thankfully, horizontal pagination (left and right) is doable using CSS. CSS has a helpful property called &lt;code class=&quot;highlighter-rouge&quot;&gt;column-width&lt;/code&gt;. Using that results in segmenting the html body into columns of the specified width. So, the idea is as follows:&lt;/p&gt;
+&lt;h2 id=&quot;when-laziness-backfires&quot;&gt;When Laziness Backfires&lt;/h2&gt;
+&lt;p&gt;Laziness may be the defining feature of Realm.
+Performance-wise, Realm saves a lot of execution time by following a lazy approach in retrieving data.
+That is, queries are not really evaluated unless the results are accessed.
+And data (objects and properties) are not loaded into memory unless accessed, too.
+Consider the following code (from the docs):&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;dogs&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;realm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objects&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Dog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// retrieves all Dogs from the default Realm&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;That line alone basically does nothing.
+Fetching is done when we start to do something with that result; like accessing the &lt;code class=&quot;highlighter-rouge&quot;&gt;count&lt;/code&gt; property, or accessing an item at index.&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;dogs&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;realm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objects&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Dog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// retrieves all Dogs from the default Realm&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dogs&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// Here it begins to really evaluate the query.&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;So, requesting &lt;code class=&quot;highlighter-rouge&quot;&gt;dogs.count&lt;/code&gt; evaluates the query. But since no data is really fetched, this executes fast.&lt;/p&gt;
+
+&lt;p&gt;Realm optimizes for this pattern of use. 
+Actually Realm bets on queries being simple, and data being already properly organized and indexed. Consider the following code:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;tanDogs&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;realm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objects&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Dog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;color = 'tan' AND name BEGINSWITH 'B'&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This is a more complex query. However, it still will be fast whenever we deal with it.
+I didn’t try a similar query on a very large dataset to confirm speed, but you can figure out how
+Realm would optimize retrieving data by following a cursor-like approach, since the expected results will
+probably be enumerated (e.g. used in a loop). 
+So, it doesn’t have to scan all the data to start giving you something to work with.
+However, consider the following query:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;sortedDogs&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;realm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objects&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Dog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;color = 'tan' AND name BEGINSWITH 'B'&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;sorted&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;byKeyPath&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;name&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Here we use the same query from above except we ask Realm to fetch sorted by name.
+Depending on the size of data, we can notice a significant slow down.
+The culprit is the sorting phase. The reason is sorting requires Realm to scan the whole data in advance to
+start giving you something to work with. So, the full cost of the filtering part will be paid.&lt;/p&gt;
+
+&lt;p&gt;Now we’re starting to make good sense of how Realm works in regard to data retrieval.
+The question is, how this can hurt us?&lt;/p&gt;
+
+&lt;p&gt;Notice we use a synchronous API when using Realm. We don’t bother with asynchrony, callbacks, 
+threads, etc. We get data in a plain simple way.
+And since everything goes as planned, we don’t block the UI thread, and everything goes smooth…until we face such query.
+Then, problems start, as the docs don’t prepare you for such situations (remember, those are “rare” situations). For example, developers will probably start to “fix” this using classic remedies, such as
+offloading work to the background. But that only reveals other Realm limitations, like instances not being passable across threads. A very popular issue among Realm users.&lt;/p&gt;
+
+&lt;p&gt;Thankfully, helpful strategies are compiled &lt;a href=&quot;https://github.com/realm/realm-cocoa/issues/4886#issuecomment-296319210&quot;&gt;here by JP Simard&lt;/a&gt;. Which can summarized as:&lt;/p&gt;
+
 &lt;ol&gt;
-  &lt;li&gt;Set the &lt;code class=&quot;highlighter-rouge&quot;&gt;column-width&lt;/code&gt; property of the body to the webview’s width.&lt;/li&gt;
-  &lt;li&gt;Set the &lt;code class=&quot;highlighter-rouge&quot;&gt;height&lt;/code&gt; property of the body to the webview’s height.&lt;/li&gt;
-  &lt;li&gt;Set &lt;code class=&quot;highlighter-rouge&quot;&gt;isPagingEnabled&lt;/code&gt; of the webview’s &lt;code class=&quot;highlighter-rouge&quot;&gt;scrollView&lt;/code&gt; to true.&lt;/li&gt;
+  &lt;li&gt;Use the async &lt;a href=&quot;https://realm.io/docs/swift/latest/#notifications&quot;&gt;notification API&lt;/a&gt;.&lt;/li&gt;
+  &lt;li&gt;Keep the database and objects small.&lt;/li&gt;
+  &lt;li&gt;Think carefully about how data should enter the database in first place.&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;That’s it (for left to right content though). It’s up to you where to set the above values. For example, you can do it in &lt;code class=&quot;highlighter-rouge&quot;&gt;webView(_:didFinish:)&lt;/code&gt; of the webview’s &lt;code class=&quot;highlighter-rouge&quot;&gt;navigationDelegate&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;While all are useful advices to follow (even when not using Realm), notice how we then get far from Realm’s
+marketed simplicity. So, to utilize Realm best, don’t think of it as an object-oriented alternative to a &lt;a href=&quot;https://en.wikipedia.org/wiki/Relational_database&quot;&gt;RDBMS&lt;/a&gt;. Think of it as persistence companion to viewing your data in lists. That is, save your data in a way it is as ready to be fetched as-is as possible without much querying and post-processing.&lt;/p&gt;
 
-&lt;h3 id=&quot;now-rtl-support&quot;&gt;Now, RTL support.&lt;/h3&gt;
+&lt;h2 id=&quot;invasive-types&quot;&gt;Invasive Types&lt;/h2&gt;
 
-&lt;p&gt;It’s as simple as setting the &lt;code class=&quot;highlighter-rouge&quot;&gt;direction&lt;/code&gt; style property of the html tag to &lt;code class=&quot;highlighter-rouge&quot;&gt;rtl&lt;/code&gt;. But if that somehow badly affects your page, then you have to get more creative. One crazy solution is as follows:&lt;/p&gt;
-&lt;ol&gt;
-  &lt;li&gt;Wrap all the contents of the &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;lt;body&amp;gt;&lt;/code&gt; tag in one container &lt;code class=&quot;highlighter-rouge&quot;&gt;div&lt;/code&gt;.&lt;/li&gt;
-  &lt;li&gt;Set the &lt;code class=&quot;highlighter-rouge&quot;&gt;-webkit-transform&lt;/code&gt; property of that div to &lt;code class=&quot;highlighter-rouge&quot;&gt;scale(-1, 1)&lt;/code&gt;. (i.e. this results in horizontal mirroring)&lt;/li&gt;
-  &lt;li&gt;Similarily, mirror the webview itself. (i.e. &lt;code class=&quot;highlighter-rouge&quot;&gt;webview.transform = CGAffeineTransform(scaledX: -1, y: 1)&lt;/code&gt;)&lt;/li&gt;
-&lt;/ol&gt;
+&lt;p&gt;Another inconvenience with Realm is that you can’t harness its performance offers unless you make 
+your code tightly coupled to its types.&lt;/p&gt;
 
-&lt;h3 id=&quot;credits&quot;&gt;Credits:&lt;/h3&gt;
-&lt;p&gt;Thanks to my friend and colleague &lt;a href=&quot;https://www.linkedin.com/in/sayed-arfa/&quot;&gt;Sayed Arfa&lt;/a&gt; for suggesting &lt;code class=&quot;highlighter-rouge&quot;&gt;column-width&lt;/code&gt; and overall inspiration.&lt;/p&gt;
+&lt;p&gt;Recall that code from above:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;tanDogs&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;realm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objects&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Dog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;color = 'tan' AND name BEGINSWITH 'B'&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We now know it will run fast as long as we don’t force Realm to do the full scan beforehand.
+We saw how could we force it by requesting a sort. However, you can force it too by converting the &lt;code class=&quot;highlighter-rouge&quot;&gt;Results&lt;/code&gt; 
+object to a Swift array, as follows:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;tanDogs&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;realm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objects&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Dog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;color = 'tan' AND name BEGINSWITH 'B'&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;map&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;So, you can see how this will affect your design, especially if you’re keen on isolating your database 
+implementation from the rest of your project.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;So, if something sounds too good to be true, it probably is.
+This is not a rant against Realm (maybe the docs 😅), it’s a brilliant solution made by brilliant engineers.
+However, we developers should deal with any tool with a grain of salt, and understand its limits before its capabilities.&lt;/p&gt;
 </description>
-        <pubDate>Fri, 03 Nov 2017 15:23:00 +0200</pubDate>
-        <link>http://localhost:4000/2017/11/03/WKWebView-Horizontal-Paging.html</link>
-        <guid isPermaLink="true">http://localhost:4000/2017/11/03/WKWebView-Horizontal-Paging.html</guid>
+        <pubDate>Sat, 23 Nov 2019 13:16:00 +0200</pubDate>
+        <link>http://localhost:4000/2019/11/23/Thoughts-on-Realm.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/11/23/Thoughts-on-Realm.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>DecodableEither</title>
+        <description>&lt;p&gt;It’s not uncommon for the back-end guys to return some JSON where the type of a field is &lt;em&gt;either&lt;/em&gt; a number or a string.
+This causes inconvenience at the app development level where it’s not enough to declare vanilla &lt;code class=&quot;highlighter-rouge&quot;&gt;Codable&lt;/code&gt; structs.
+Thankfully, &lt;code class=&quot;highlighter-rouge&quot;&gt;Decodable&lt;/code&gt; makes this way less messy than first imagined.
+We can wrap the &lt;em&gt;either&lt;/em&gt; logic in a separate &lt;code class=&quot;highlighter-rouge&quot;&gt;Decodable&lt;/code&gt; type that handles this for us:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Product&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;EitherIntOrString&lt;/span&gt;
+    
+    &lt;span class=&quot;kd&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;EitherIntOrString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
+        
+        &lt;span class=&quot;nf&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;decoder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decoder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;values&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;decoder&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;singleValueContainer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;values&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;values&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;guard&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ParsingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringParsingError&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+                
+                &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;int&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    
+    &lt;span class=&quot;kd&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ParsingError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Error&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stringParsingError&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;So, JSON like the following parses successfully:&lt;/p&gt;
+
+&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;id&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;12&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;id&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;14&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;generalizing&quot;&gt;Generalizing&lt;/h3&gt;
+
+&lt;p&gt;We can make a generic &lt;em&gt;either&lt;/em&gt; type out of this.
+All we need is two &lt;code class=&quot;highlighter-rouge&quot;&gt;Decodable&lt;/code&gt; types, and a converter from a type to the other.
+Let’s see:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;protocol&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Converter&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;associatedtype&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;associatedtype&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T2&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;convert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;t2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DecodableEither&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;C&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Converter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;C&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;C&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;T2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T2&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;
+
+    &lt;span class=&quot;nf&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;decoder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decoder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;values&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;decoder&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;singleValueContainer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;values&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;t2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;values&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;T2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;guard&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;t1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;C&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;convert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;t2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Error&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conversionError&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+            
+            &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;t1&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    
+    &lt;span class=&quot;kd&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Swift&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Error&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conversionError&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Let’s break this down:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;DecodableEither&amp;lt;T1: Decodable, T2: Decodable, C: Converter&amp;gt;: Decodable&lt;/code&gt;. 
+Here we declare a generic struct that conforms to &lt;code class=&quot;highlighter-rouge&quot;&gt;Decodable&lt;/code&gt;, and depends on three types.
+The first two are any &lt;code class=&quot;highlighter-rouge&quot;&gt;Decodable&lt;/code&gt; types.
+The third is just a type that conforms to a protocol called &lt;code class=&quot;highlighter-rouge&quot;&gt;Converter&lt;/code&gt; that we will use for converting from type &lt;code class=&quot;highlighter-rouge&quot;&gt;T2&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;T1&lt;/code&gt;.&lt;/li&gt;
+  &lt;li&gt;The &lt;code class=&quot;highlighter-rouge&quot;&gt;Converter&lt;/code&gt; protocol declares a static function that converts from a generic type to another.
+Such protocol is called &lt;em&gt;protocol with associated types&lt;/em&gt;, commonly called “PATs”.&lt;/li&gt;
+  &lt;li&gt;Now, the Swiftiest thing in this code, the type constraints. &lt;code class=&quot;highlighter-rouge&quot;&gt;where C.T1 == T1, C.T2 == T2&lt;/code&gt;.
+This part after the &lt;code class=&quot;highlighter-rouge&quot;&gt;DecodableEither&lt;/code&gt; declaration is what ensures type-safety and makes things work together.
+Here we tell the Swift compiler to ensure that any &lt;code class=&quot;highlighter-rouge&quot;&gt;Converter&lt;/code&gt; type passed to us here must have its two associated types be the very two types passed to the &lt;code class=&quot;highlighter-rouge&quot;&gt;DecodableEither&lt;/code&gt;.
+This what makes that line &lt;code class=&quot;highlighter-rouge&quot;&gt;let t1 = C.convert(t2)&lt;/code&gt; in the alternate decoding phase work, and infer correctly the given types.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Now, we can use this generic type like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;StringToIntConverter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Converter&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;convert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;t2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;t2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Product&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DecodableEither&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;StringToIntConverter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Usage:&lt;/p&gt;
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;json&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot;
+    [
+        { &quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;: 12 },
+        { &quot;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;: &quot;&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;14&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot; }
+    ]
+&quot;&quot;&quot;&lt;/span&gt;
+        
+&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;products&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try!&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;JSONDecoder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Product&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;from&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;json&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;using&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;utf8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;products&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;forEach&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;({&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// value is Int 👍&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We can also use typealisases if a particular combination is used frequently:&lt;/p&gt;
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;typealias&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DecodableEitherIntOrString&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DecodableEither&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;StringToIntConverter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Product&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DecodableEitherIntOrString&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;That’s it. Thanks for reading!&lt;/p&gt;
+
+&lt;h1 id=&quot;update-16-10-2019&quot;&gt;Update (16-10-2019)&lt;/h1&gt;
+
+&lt;p&gt;I stumbled upon &lt;a href=&quot;https://twitter.com/jsslai/status/1184536734081650690?s=20&quot;&gt;this brilliant suggestion&lt;/a&gt; by &lt;a href=&quot;https://twitter.com/jsslai?s=17&quot;&gt;Jussi Laitinen&lt;/a&gt;.
+Now, our solution can be cleaner by eliminating the third &lt;code class=&quot;highlighter-rouge&quot;&gt;Converter&lt;/code&gt; type, and instead requiring our first type to be convertible from the second type. Let’s see this in code:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;protocol&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Convertible&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;associatedtype&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DecodableEither&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Convertible&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decodable&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T2&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;
+    
+    &lt;span class=&quot;nf&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;decoder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Decoder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;values&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;decoder&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;singleValueContainer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;values&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;t2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;values&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;T2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;guard&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;t1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;t2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Error&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conversionError&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+            
+            &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;t1&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    
+    &lt;span class=&quot;kd&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Swift&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Error&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conversionError&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Also, converting from &lt;code class=&quot;highlighter-rouge&quot;&gt;String&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;Int&lt;/code&gt; is a lot simpler now, since &lt;code class=&quot;highlighter-rouge&quot;&gt;Int&lt;/code&gt; already has a &lt;a href=&quot;https://www.hackingwithswift.com/sixty/10/9/failable-initializers&quot;&gt;failable initializer&lt;/a&gt; that accepts a &lt;code class=&quot;highlighter-rouge&quot;&gt;String&lt;/code&gt;. We just extend &lt;code class=&quot;highlighter-rouge&quot;&gt;Int&lt;/code&gt; to conform to our &lt;code class=&quot;highlighter-rouge&quot;&gt;Convertible&lt;/code&gt; protocol while stating that the generic/associated type &lt;code class=&quot;highlighter-rouge&quot;&gt;T&lt;/code&gt; to be &lt;code class=&quot;highlighter-rouge&quot;&gt;String&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;extension&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Convertible&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;typealias&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</description>
+        <pubDate>Fri, 04 Oct 2019 12:46:00 +0200</pubDate>
+        <link>http://localhost:4000/2019/10/04/DecodableEither.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/10/04/DecodableEither.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>translatesAutoresizingMaskIntoConstraints</title>
+        <description>&lt;p&gt;Did you ever forget to set &lt;code class=&quot;highlighter-rouge&quot;&gt;translatesAutoresizingMaskIntoConstraints&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;false&lt;/code&gt; before adding constraints to a view created in code, and wasted much time in debugging? You are not alone, many of us did.&lt;/p&gt;
+
+&lt;p&gt;But did you ever forget to set it to &lt;code class=&quot;highlighter-rouge&quot;&gt;true&lt;/code&gt;, and it also did cause other troubles? This is what this article is about.&lt;/p&gt;
+
+&lt;h3 id=&quot;what-is-translatesautoresizingmaskintoconstraints&quot;&gt;What is &lt;code class=&quot;highlighter-rouge&quot;&gt;translatesAutoresizingMaskIntoConstraints&lt;/code&gt;?&lt;/h3&gt;
+
+&lt;p&gt;From the docs:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;If this property’s value is true, the system creates a set of constraints that duplicate the behavior specified by the view’s autoresizing mask. This also lets you modify the view’s size and location using the view’s frame, bounds, or center properties, allowing you to create a static, frame-based layout within Auto Layout.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Note that the autoresizing mask constraints fully specify the view’s size and position; therefore, you cannot add additional constraints to modify this size or position without introducing conflicts. If you want to use Auto Layout to dynamically calculate the size and position of your view, you must set this property to &lt;code class=&quot;highlighter-rouge&quot;&gt;false&lt;/code&gt;, and then provide a non ambiguous, nonconflicting set of constraints for the view.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;By default, the property is set to true for any view you programmatically create. If you add views in Interface Builder, the system automatically sets this property to &lt;code class=&quot;highlighter-rouge&quot;&gt;false&lt;/code&gt;.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;So, in an AutoLayout-enabled view (what you get from using Interface Builder commonly), every view is expected to have constraints to define its size and position. So, as a convenience, if we ever want to manually layout a specific view in a such AutoLayout-enabled view hierarchy, having &lt;code class=&quot;highlighter-rouge&quot;&gt;translatesAutoresizingMaskIntoConstraints&lt;/code&gt; set to &lt;code class=&quot;highlighter-rouge&quot;&gt;true&lt;/code&gt; (the default) results in translating our changes to the &lt;code class=&quot;highlighter-rouge&quot;&gt;frame&lt;/code&gt; (and &lt;code class=&quot;highlighter-rouge&quot;&gt;bounds&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;center&lt;/code&gt;) property into constraints.&lt;/p&gt;
+
+&lt;p&gt;So, this is why we set it to &lt;code class=&quot;highlighter-rouge&quot;&gt;false&lt;/code&gt; if we are adding constraints to a view in code, to avoid ending up with conflicting constraints. But when do we need to set it to &lt;code class=&quot;highlighter-rouge&quot;&gt;true&lt;/code&gt;? As mentioned in the third paragraph from the docs excerpt above, Interface Builder sets this property to &lt;code class=&quot;highlighter-rouge&quot;&gt;false&lt;/code&gt; automatically &lt;strong&gt;because it expects us to add constraints&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;when-to-set-translatesautoresizingmaskintoconstraints-to-true&quot;&gt;When to set &lt;code class=&quot;highlighter-rouge&quot;&gt;translatesAutoresizingMaskIntoConstraints&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;true&lt;/code&gt;?&lt;/h3&gt;
+
+&lt;p&gt;So, if you, for any reason, have to define your view in Interface Builder, but also want to manually layout it in code, you’ll need to set &lt;code class=&quot;highlighter-rouge&quot;&gt;translatesAutoresizingMaskIntoConstraints&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;true&lt;/code&gt; before layout.&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 13 Sep 2019 22:34:00 +0200</pubDate>
+        <link>http://localhost:4000/2019/09/13/translatesAutoresizingMaskIntoConstraints.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/09/13/translatesAutoresizingMaskIntoConstraints.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Sources of Truths</title>
+        <description>&lt;p&gt;It’s not uncommon to see a variable in some codebase that looks like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;isAlertShown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Or:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;pageIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Such variables are used in order to track some &lt;strong&gt;state&lt;/strong&gt;. 
+Let’s see an example, a contrived one:&lt;/p&gt;
+
+&lt;p&gt;We are going to show an alert whenever the app receives a remote notification. But we want to avoid attempting to present a new one if an alert is already shown. 
+So we are going to use a &lt;code class=&quot;highlighter-rouge&quot;&gt;UIAlertController&lt;/code&gt; for this task. 
+One may write code like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ViewController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIViewController&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;isAlertShown&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;
+
+    &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;showAlert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;guard&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isAlertShown&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;alert&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIAlertController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;New Message!&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;message&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;preferredStyle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;addAction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;UIAlertAction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;OK&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;handler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isAlertShown&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}))&lt;/span&gt;
+    
+        &lt;span class=&quot;n&quot;&gt;isAlertShown&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;
+    
+        &lt;span class=&quot;nf&quot;&gt;present&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;completion&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Here we’re using &lt;code class=&quot;highlighter-rouge&quot;&gt;isAlertShown&lt;/code&gt; to track the state telling if our alert is shown or not. 
+We have to &lt;strong&gt;mutate this variable correctly to ensure it correctly represents the actual state of whether the alert is shown or not&lt;/strong&gt;.
+However, if the alert got dismissed by any other mean than our cancel action, the variable &lt;code class=&quot;highlighter-rouge&quot;&gt;isAlertShown&lt;/code&gt; will have a wrong value.&lt;/p&gt;
+
+&lt;p&gt;The reason is &lt;code class=&quot;highlighter-rouge&quot;&gt;isAlertShown&lt;/code&gt; is not the &lt;em&gt;source of truth&lt;/em&gt;. We can avoid such bug if we &lt;em&gt;queried&lt;/em&gt; a fresh value from the ever-changing environment itself. 
+For this particular example, we can check if the &lt;code class=&quot;highlighter-rouge&quot;&gt;presentedViewController&lt;/code&gt; property is of type &lt;code class=&quot;highlighter-rouge&quot;&gt;UIAlertController&lt;/code&gt;. Like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ViewController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIViewController&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;isAlertShown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;presentedViewController&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIAlertController&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;showAlert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;guard&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isAlertShown&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;alert&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIAlertController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;New Message!&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;message&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;preferredStyle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;addAction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;UIAlertAction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;OK&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;handler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+        &lt;span class=&quot;nf&quot;&gt;present&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;completion&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Alternatively, we can use a weak reference if we want to be sure that the presented alert is a particular one.&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ViewController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIViewController&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;weak&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;shownAlert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIAlertController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt;
+
+    &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;showAlert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;guard&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shownAlert&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;alert&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIAlertController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;New Message!&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;message&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;preferredStyle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;addAction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;UIAlertAction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;OK&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cancel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;handler&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;shownAlert&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;
+
+        &lt;span class=&quot;nf&quot;&gt;present&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;alert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;completion&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Once it’s dismissed, by any means, the weak reference will be nil. No need for mutations.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;So, I think the idea is clear now.
+Want to track the download status of some book? &lt;strong&gt;Infer&lt;/strong&gt; it from the existence of the relevant files.
+Want to track the current index of a paged &lt;code class=&quot;highlighter-rouge&quot;&gt;UICollectionView&lt;/code&gt;? &lt;strong&gt;Infer&lt;/strong&gt; it from the relation of the &lt;code class=&quot;highlighter-rouge&quot;&gt;contentOffset&lt;/code&gt; to the &lt;code class=&quot;highlighter-rouge&quot;&gt;contentSize&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;This principle is discussed on the &lt;a href=&quot;http://google.com/search?q=single+source+of+truth&quot;&gt;web&lt;/a&gt;. However, it’s more data (or database) oriented.
+So, I wanted to discuss it in a close-to-UI context, where we, iOS developers, spend a significant time.&lt;/p&gt;
+
+&lt;p&gt;Thanks for reading!&lt;/p&gt;
+</description>
+        <pubDate>Fri, 30 Aug 2019 16:06:00 +0200</pubDate>
+        <link>http://localhost:4000/2019/08/30/Sources-of-Truths.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/08/30/Sources-of-Truths.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Loading Images out of the Asset Catalog: Part 1</title>
+        <description>&lt;h2 id=&quot;asset-catalog&quot;&gt;Asset Catalog&lt;/h2&gt;
+&lt;p&gt;We use &lt;a href=&quot;https://developer.apple.com/library/archive/documentation/Xcode/Reference/xcode_ref-Asset_Catalog_Format/index.html&quot;&gt;Asset Catalog&lt;/a&gt; to store images we use inside our apps. If you’re not using it, you should. It’s not just a fancy way to organize our resources. It also does some optimizations we happen to overlook them.&lt;/p&gt;
+
+&lt;p&gt;However, if you have to not use Asset Catalogs, there are some things you should be aware of. In this part, we are going to investigate the &lt;strong&gt;scale&lt;/strong&gt; property of an image.&lt;/p&gt;
+
+&lt;h2 id=&quot;1x-2x-3x&quot;&gt;@1x, @2x, @3x&lt;/h2&gt;
+
+&lt;p&gt;The most noticeable feature of asset catalogs is the facility to provide different versions of an image for different screen scales. If we don’t use asset catalogs, we are required to put such information in the bundled file’s name (e.g. pic@2x.png, pic@3x.png). If we don’t provide such info, a &lt;code class=&quot;highlighter-rouge&quot;&gt;UIImage&lt;/code&gt; instance created from such file will have a default scale factor of 1.0.&lt;/p&gt;
+
+&lt;p&gt;Good, but what if we have an app that loads images from a folder? We don’t want to hard-code image names in our project. We had this use case in one of our apps, and the code to read such images involved enumerating file paths under the given folder URL and creating &lt;code class=&quot;highlighter-rouge&quot;&gt;UIImage&lt;/code&gt; instances like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;path&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;paths&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;image&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIImage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;contentsOfFile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We also didn’t have scale modifiers in the file names. So, every &lt;code class=&quot;highlighter-rouge&quot;&gt;UIImage&lt;/code&gt; loaded with a scale factor of 1.0.&lt;/p&gt;
+
+&lt;h2 id=&quot;what-is-the-implication&quot;&gt;What is the implication?&lt;/h2&gt;
+
+&lt;p&gt;From Apple’s docs on the &lt;a href=&quot;https://developer.apple.com/documentation/uikit/uiimage/1624110-scale&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;scale&lt;/code&gt;&lt;/a&gt; property of the &lt;code class=&quot;highlighter-rouge&quot;&gt;UIImage&lt;/code&gt; class:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;If you multiply the logical size of the image (stored in the size property) by the value in this property, you get the dimensions of the image in pixels.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;I’m not so good at English, but I don’t think that phrasing is the best. The way it’s put makes you think that the pixel size is the variable here. It isn’t. The pixel size is fixed. The logical size of the image (what you get via the &lt;code class=&quot;highlighter-rouge&quot;&gt;size&lt;/code&gt; property) is the pixel size divided by the scale factor (of the image; not the screen).&lt;/p&gt;
+
+&lt;h2 id=&quot;again-what-is-the-implication&quot;&gt;Again, what is the implication?&lt;/h2&gt;
+
+&lt;p&gt;If you have a &lt;code class=&quot;highlighter-rouge&quot;&gt;UIImageView&lt;/code&gt; that derives its size from its content, and we want it to always show the full pixel size of its content, ignoring choosing the appropriate scale factor leads to incorrect frame size. For example, if you have an image that is 640x640 pixels. What logical size should a self-sizing &lt;code class=&quot;highlighter-rouge&quot;&gt;UIImageView&lt;/code&gt; have in a @2x screen? The answer is 320x320 points. But loading such image without providing a scale factor leads to having an image view with a logical size of 640x640 points. That is, 1280x1280 pixels. That’s double of the actual size. Which means that the image is upscaled. Which affects perceived quality, or generally, not the wanted actual pixel size.&lt;/p&gt;
+
+&lt;p&gt;So, instead, we should create &lt;code class=&quot;highlighter-rouge&quot;&gt;UIImage&lt;/code&gt;s using &lt;a href=&quot;https://developer.apple.com/documentation/uikit/uiimage/1624109-init&quot;&gt;init(data:scale:)&lt;/a&gt; like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;image&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIImage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;scale&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIScreen&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;scale&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Where &lt;code class=&quot;highlighter-rouge&quot;&gt;data&lt;/code&gt; is a &lt;code class=&quot;highlighter-rouge&quot;&gt;Data&lt;/code&gt; instance created from a given file path or a URL.&lt;/p&gt;
+
+&lt;p&gt;This way we ensure the image appears at its actual pixel size in any device.&lt;/p&gt;
+
+&lt;p&gt;Here’s an &lt;a href=&quot;https://github.com/ahmedk92/ImageScale&quot;&gt;example&lt;/a&gt; demonstrating this.&lt;/p&gt;
+</description>
+        <pubDate>Fri, 12 Jul 2019 14:16:00 +0200</pubDate>
+        <link>http://localhost:4000/2019/07/12/Loading-Images-out-of-the-Asset-Catalog-Part1.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/07/12/Loading-Images-out-of-the-Asset-Catalog-Part1.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Simple Overflowing Paginated UIScrollView</title>
+        <description>&lt;p&gt;So, I was using this beautiful Quran app &lt;a href=&quot;https://itunes.apple.com/app/apple-store/id706037876?mt=8&quot;&gt;Ayah&lt;/a&gt;. I noticed something cool about how it pages its content; there is a visual divider between each two inner pages, and a different one between outer pages. See the below gif for clarity.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://localhost:4000/assets/ayah1.gif&quot; alt=&quot;Overflowing Pagination&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;preliminary-analysis&quot;&gt;Preliminary Analysis&lt;/h2&gt;
+
+&lt;p&gt;You may see such effect being called &lt;strong&gt;“Overflowing Pagination”&lt;/strong&gt;. This is not uncommon, and there is good write-ups on how it can be achieved; for example: Soroush’s articles &lt;a href=&quot;http://khanlou.com/2013/04/changing-the-size-of-a-paging-scroll-view/&quot;&gt;1&lt;/a&gt; &amp;amp; &lt;a href=&quot;http://khanlou.com/2013/04/paging-a-overflowing-collection-view/&quot;&gt;2&lt;/a&gt;. Also allow me to plug in an &lt;a href=&quot;/2019/01/19/Experimenting-With-targetContentOffset-Part-1-Uneven-Pagination.html&quot;&gt;earlier experimentation of mine&lt;/a&gt; 😁.&lt;/p&gt;
+
+&lt;h2 id=&quot;buti-overthought-the-problem-as-usual&quot;&gt;But…I overthought the problem. As usual.&lt;/h2&gt;
+
+&lt;p&gt;Techniques mentioned above deal with a trickier problem; paging with a page size different than the scrollView’s bounds width (the default behavior you get with &lt;code class=&quot;highlighter-rouge&quot;&gt;isPagingEnabled&lt;/code&gt;). Luckily, to achieve what we saw in the video, we don’t need any of this.&lt;/p&gt;
+
+&lt;p&gt;If you notice, you’ll see that although there are two different looking separator views, they are of the same size. So, this gives us an idea. Instead of having the width of the scroll view being equal to our screen, we increase it by how big we want our separator views to be (with the extra width being evenly distributed over both sides). Moreover, we center the scroll view in which the extra portions are off-screen. And that’s it. Here’s a &lt;a href=&quot;https://github.com/ahmedk92/SpacedPageViewController&quot;&gt;sample code&lt;/a&gt;, and a demo of it below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://localhost:4000/assets/overflowing.gif&quot; alt=&quot;Overflowing Pagination&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;And as you may already know, as this applies to &lt;code class=&quot;highlighter-rouge&quot;&gt;UIScrollView&lt;/code&gt;, then it applies to &lt;code class=&quot;highlighter-rouge&quot;&gt;UIPageViewController&lt;/code&gt; (as in the linked sample) and &lt;code class=&quot;highlighter-rouge&quot;&gt;UICollectionView&lt;/code&gt; with &lt;code class=&quot;highlighter-rouge&quot;&gt;isPagingEnabled&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Thanks. Looking forward for your feedback.&lt;/p&gt;
+</description>
+        <pubDate>Sun, 12 May 2019 10:44:00 +0200</pubDate>
+        <link>http://localhost:4000/2019/05/12/Simple-Overflowing-Paginated-UIScrollView.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/05/12/Simple-Overflowing-Paginated-UIScrollView.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Rendering off Main Thread in iOS</title>
+        <description>&lt;p&gt;One of the first lessons we learn in iOS development is that UIKit classes (&lt;code class=&quot;highlighter-rouge&quot;&gt;UILabel&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;UIImageView&lt;/code&gt;, …etc) shouldn’t be touched outside the main thread. Sometimes we learn it &lt;a href=&quot;https://stackoverflow.com/a/12927485/715593&quot;&gt;the hard way&lt;/a&gt;. However, &lt;strong&gt;this doesn’t mean we cannot do any form of rendering off the main thread&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;Classes like &lt;code class=&quot;highlighter-rouge&quot;&gt;NSAttributedString&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;UIImage&lt;/code&gt; come with &lt;a href=&quot;https://developer.apple.com/documentation/foundation/nsattributedstring/1531631-draw&quot;&gt;methods&lt;/a&gt; for drawing to a given graphics context; an &lt;a href=&quot;https://developer.apple.com/documentation/uikit/1623912-uigraphicsbeginimagecontextwitho?language=objc&quot;&gt;image context&lt;/a&gt; for our use case. This doesn’t mandate being done in a particular thread. Not only this, but UIKit enables us to export what’s drawn to the current context to a bitmap image using &lt;a href=&quot;https://developer.apple.com/documentation/uikit/1623924-uigraphicsgetimagefromcurrentima&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;UIGraphicsGetImageFromCurrentImageContext&lt;/code&gt;&lt;/a&gt;. This means we can do any complex drawing like we do with CoreGraphics in &lt;code class=&quot;highlighter-rouge&quot;&gt;drawRect:&lt;/code&gt;, and then export this to a bitmap.&lt;/p&gt;
+
+&lt;p&gt;All what we have to do next is to display the resulting image in our view. This is easily achieved by setting the views &lt;a href=&quot;https://developer.apple.com/documentation/quartzcore/calayer/1410773-contents&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;layer.contents&lt;/code&gt;&lt;/a&gt; property to a &lt;code class=&quot;highlighter-rouge&quot;&gt;CGImage&lt;/code&gt; representation of our image. And that’s it.&lt;/p&gt;
+
+&lt;h2 id=&quot;cool-but-why&quot;&gt;Cool, but why?&lt;/h2&gt;
+
+&lt;p&gt;UIKit performance is great 99% of the time. However, it’s not the best we can acheive. UIKit performance degrades noticebly when rendering large scrolling amounts of text and images with varying sizes, in addition to relying on AutoLayout for sizing. &lt;a href=&quot;https://developer.apple.com/videos/play/wwdc2018/220&quot;&gt;AutoLayout came along way in iOS 12&lt;/a&gt;, but earlier iOS versions are still in support, and no matter how fast AutoLayout becomes, it still works on the main thread.&lt;/p&gt;
+
+&lt;p&gt;AutoLayout is not only the slowing factor. Actual rendering and intrinsic content size calculation also happens on the main thread. I’ve profiled stuttering scrolling performances and the culprit was none other than regular text drawing invoked from &lt;code class=&quot;highlighter-rouge&quot;&gt;UILabel&lt;/code&gt;’s drawing.&lt;/p&gt;
+
+&lt;h2 id=&quot;rendering-and-sizing&quot;&gt;Rendering and Sizing&lt;/h2&gt;
+
+&lt;p&gt;If you notice, we’re dealing with two types of problems: (1) Rendering, i.e. the graphical content we see, and (2) Sizing, i.e. what space our rendered content will consume.&lt;/p&gt;
+
+&lt;p&gt;We talked about rendering methods above. If you notice, those rendering methods rely on a &lt;code class=&quot;highlighter-rouge&quot;&gt;CGRect&lt;/code&gt; input, that is the bounding box of the graphical content. So, this implies a prior sizing step. Sizing images is usually easy; as we know beforehand where it would appear, and at what size. Text may be a bit trickier; as we usually fix a dimension (width or height) then let the text flow with respect to the desired alignment, consuming space depending on the font and other text attributes. Fortunately, there are more than one way to calculate bounding rectangles for attributed strings. The simplest method is &lt;code class=&quot;highlighter-rouge&quot;&gt;NSAttributedString&lt;/code&gt;’s &lt;a href=&quot;https://developer.apple.com/documentation/foundation/nsstring/1524729-boundingrect&quot;&gt;boundingRect&lt;/a&gt;. Other ways involve utilizing &lt;code class=&quot;highlighter-rouge&quot;&gt;NSLayoutManager&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;NSTextContainer&lt;/code&gt;, and &lt;code class=&quot;highlighter-rouge&quot;&gt;NSTextStorage&lt;/code&gt; trio for advanced text layout.&lt;/p&gt;
+
+&lt;h2 id=&quot;a-simple-demo&quot;&gt;A Simple Demo&lt;/h2&gt;
+
+&lt;p&gt;I made a very &lt;a href=&quot;https://github.com/ahmedk92/PrerenderingDemo&quot;&gt;simplistic demo&lt;/a&gt; that showcases the gains in a scrolling use case. Notice the regular implementation (left) stutters on fast scrolling, while the prerendered implementation (right) scrolls like the wind. One cost is to engineer when to pre-load the pre-rendered conent. I went with an inefficient way for the sake of simplicity (i.e. loading all beforehand). This is a real cost for such approach.&lt;/p&gt;
+
+&lt;h2 id=&quot;where-to-go-from-here&quot;&gt;Where to go from here?&lt;/h2&gt;
+
+&lt;p&gt;I’m just exploring this technique myself. It’s not something new. There are already amazing libraries which adopt this approach; namely Ryan Nystrom’s &lt;a href=&quot;https://github.com/GitHawkApp/StyledTextKit&quot;&gt;StyledTextKit&lt;/a&gt;, and &lt;a href=&quot;https://texturegroup.org&quot;&gt;Texture&lt;/a&gt; (AsyncDisplayKit).&lt;/p&gt;
+
+&lt;h2 id=&quot;notes&quot;&gt;Notes&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;When using &lt;code class=&quot;highlighter-rouge&quot;&gt;UIGraphicsBeginImageContextWithOptions&lt;/code&gt;, take some notes:
+    &lt;ul&gt;
+      &lt;li&gt;The third parameter is the scale at which the bitmap is generated. A zero values picks the device’s scale (i.e. 2x, 3x). This helpful in emulating vector drawing behavior in zoomable views by redrawing content at a higher scale (e.g. device scale * zoom scale).&lt;/li&gt;
+      &lt;li&gt;Don’t forget to call &lt;code class=&quot;highlighter-rouge&quot;&gt;UIGraphicsEndImageContext&lt;/code&gt; after done dealing with the image context. This is to clean up memory. This approach can use memory extensively, it’s a really important step.&lt;/li&gt;
+      &lt;li&gt;The second parameter is whether to draw opaquely or transparent. If you know that your view is going to be not transparent, it’s good to set this to true, as transparency is a computationally expensive task. See this &lt;a href=&quot;https://developer.apple.com/videos/play/wwdc2012/506/&quot;&gt;WWDC session at 29:28 mark&lt;/a&gt;.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Use a serial &lt;code class=&quot;highlighter-rouge&quot;&gt;DispatchQueue&lt;/code&gt; instead of a gloabl queue if you’re going to render multiple views in series, or group them in a single block to be executed in a global queue. Anyways don’t execute each block individually in a gobal queue. This to avoid creating more threads than CPU can handle; what’s called “Thread Explosion”. See this &lt;a href=&quot;https://developer.apple.com/videos/play/wwdc2018/219/?time=1002&quot;&gt;WWDC talk at 16:42 mark&lt;/a&gt;.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;When using &lt;code class=&quot;highlighter-rouge&quot;&gt;NSAttributedString&lt;/code&gt;’s boundingRect:
+    &lt;ul&gt;
+      &lt;li&gt;You have to use an &lt;code class=&quot;highlighter-rouge&quot;&gt;NSAttributedString&lt;/code&gt; instance with at least &lt;code class=&quot;highlighter-rouge&quot;&gt;.font&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;.foregroundColor&lt;/code&gt; attributes set, or else it won’t give correct results.&lt;/li&gt;
+      &lt;li&gt;The first &lt;code class=&quot;highlighter-rouge&quot;&gt;CGSize&lt;/code&gt; parameter it takes marks what constrained dimension it expects, and what other dimension to compute. For example, to emulate the behaviour of a &lt;code class=&quot;highlighter-rouge&quot;&gt;UILabel&lt;/code&gt; with &lt;code class=&quot;highlighter-rouge&quot;&gt;numberOfLines&lt;/code&gt; set to 0, you provide a fixed width, and a height value of &lt;code class=&quot;highlighter-rouge&quot;&gt;.greatestFiniteMagnitude&lt;/code&gt;. &lt;a href=&quot;https://github.com/ahmedk92/PrerenderingDemo/blob/a17dddf3bf609344499056c1b52e16bee40bf3ee/PrerenderingDemo/LabelModel.swift#L31&quot;&gt;Example&lt;/a&gt;.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;update-06-09-2019&quot;&gt;Update (06-09-2019)&lt;/h2&gt;
+&lt;p&gt;This made its way to a talk at a &lt;a href=&quot;https://twitter.com/SwiftCairo&quot;&gt;SwiftCairo&lt;/a&gt; meet-up. You can find the slides and a sample code &lt;a href=&quot;https://github.com/ahmedk92/AsyncDrawing&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Sat, 23 Mar 2019 11:26:00 +0200</pubDate>
+        <link>http://localhost:4000/2019/03/23/Rendering-off-main-thread-in-iOS.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/03/23/Rendering-off-main-thread-in-iOS.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Non-Repeatable viewDidAppear Logic</title>
+        <description>&lt;p&gt;Sometimes we need to show an alert, apply a gradient, or conditionally show another view controller on the startup of a view controller. We wish to do such thing in &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidLoad&lt;/code&gt;, however we end up doing it in &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidAppear(_:)&lt;/code&gt;. This is because such purposes have requirements that are not fulfilled when &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidLoad&lt;/code&gt; executes; e.g. frames are not yet correct, view hierarchy is not ready, …etc.&lt;/p&gt;
+
+&lt;p&gt;One annoyance with &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidAppear(_:)&lt;/code&gt; is that it can get called multiple times. For example, if you present a new view controller, then dismiss it sometime after, it gets called again. You have to handle such logic that shouldn’t be repeated.&lt;/p&gt;
+
+&lt;h2 id=&quot;solutions-that-work-but-i-dont-quite-like&quot;&gt;Solutions that work, but I don’t quite like&lt;/h2&gt;
+
+&lt;h3 id=&quot;1-booleans&quot;&gt;1. Booleans&lt;/h3&gt;
+
+&lt;p&gt;One can introduce a &lt;code class=&quot;highlighter-rouge&quot;&gt;Bool&lt;/code&gt; like &lt;code class=&quot;highlighter-rouge&quot;&gt;viewAppeared&lt;/code&gt;; checking and setting it for once:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;viewAppeared&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;viewDidAppear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;viewDidAppear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;viewAppeared&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// Do non-repeatable logic...&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;viewAppeared&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;It works. However, I tend to try to avoid “state variables” as much as I can (doesn’t mean I succeed much 😅). Although they look simple, bugs find their way around them. And in this particular situation, you may need to repeat some check you did earlier in &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidLoad&lt;/code&gt;, and it gets less nice:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;viewDidLoad&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;viewDidLoad&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// conditional initial setup &lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;viewDidAppear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;viewDidAppear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;viewAppeared&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+
+        &lt;span class=&quot;c1&quot;&gt;// this check again&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;viewAppeared&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;2-deferring-with-gcd&quot;&gt;2. Deferring with GCD&lt;/h3&gt;
+
+&lt;p&gt;Magic. GCD helps in executing code &lt;em&gt;later&lt;/em&gt;. There are two ways to do it for our need: &lt;code class=&quot;highlighter-rouge&quot;&gt;async&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;asyncAfter(deadline:execute:)&lt;/code&gt;. We can use either in &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidLoad&lt;/code&gt; to execute non-repeatable code “later enough”.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;asyncAfter(deadline:execute:)&lt;/code&gt; is straight forward:&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;viewDidLoad&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;viewDidLoad&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;DispatchQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;asyncAfter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;deadline&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;now&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Non-repeated logic&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Why 0.1 seconds? No idea. It’s just late enough. It works, but it depends on a magic number, we don’t know exactly when this code runs.&lt;/p&gt;
+
+&lt;p&gt;What about just &lt;code class=&quot;highlighter-rouge&quot;&gt;async&lt;/code&gt;? It works too, no explicit delay needed. That’s because code in a &lt;code class=&quot;highlighter-rouge&quot;&gt;DispatchQueue.main.async&lt;/code&gt; block &lt;strong&gt;is executed in the next &lt;a href=&quot;https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html&quot;&gt;run loop&lt;/a&gt;&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;Believe me, I’ve read a lot about run loops, I still don’t understand them much. However, for the main thread, you can interpret them as time slices in which the main thread accepts input, updates UI, calculate layouts, and more importantly &lt;strong&gt;&lt;em&gt;“polls”&lt;/em&gt; code enqueued via &lt;code class=&quot;highlighter-rouge&quot;&gt;DispatchQueue.main.async&lt;/code&gt;&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;So, When we dispatch code async on the main queue from the main thread, it doesn’t run immediately; it waits to be polled in the next run loop, leaving enough time for the requirements mentioned above to be fulfilled. Remember our blog post? 😂 Now let’s continue it. This GCD thing worth it’s own blog post.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;If you look at code I wrote (I hope you don’t), you’ll find me guilty of using this to hack my way through. It’s not good, I don’t recommend it. We should invest more time to really solve latency problems rather than working around them.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;a-better-solution&quot;&gt;A Better Solution?&lt;/h2&gt;
+
+&lt;p&gt;Here I suggest a solution that I think is better. GCD gave us a hint, we need to queue tasks on &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidLoad&lt;/code&gt;; but execute it later. So, what about queuing it on &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidLoad&lt;/code&gt;, then execute it on &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidAppear(_:)&lt;/code&gt;?&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;viewDidAppearQueue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;()]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;viewDidLoad&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;viewDidLoad&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        
+    &lt;span class=&quot;n&quot;&gt;viewDidAppearQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;append&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// Our non-repeatable logic&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    
+&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;viewDidAppear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;viewDidAppear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;animated&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        
+    &lt;span class=&quot;c1&quot;&gt;// Dequeue tasks and execute them in FIFO order&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;viewDidAppearQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isEmpty&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;viewDidAppearQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;removeFirst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We introduce a simple array of closures. We add our tasks as closures in &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidLoad&lt;/code&gt;. Then in &lt;code class=&quot;highlighter-rouge&quot;&gt;viewDidAppear(_:)&lt;/code&gt; we execute each closure and remove it from the array. If there are no tasks; nothing happens, just what we need.&lt;/p&gt;
+
+&lt;p&gt;We also don’t need to weakly capture &lt;code class=&quot;highlighter-rouge&quot;&gt;self&lt;/code&gt; (i.e. &lt;code class=&quot;highlighter-rouge&quot;&gt;[weak self] in&lt;/code&gt;) when appending closures. This is because strong references to the closures are lost when we remove them from the array. So, we should be safe.&lt;/p&gt;
+
+&lt;p&gt;Thanks for reading. Feedback is welcome.&lt;/p&gt;
+
+</description>
+        <pubDate>Tue, 05 Feb 2019 03:40:00 +0200</pubDate>
+        <link>http://localhost:4000/2019/02/05/Non-Repeatable-viewDidAppear-Logic.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/02/05/Non-Repeatable-viewDidAppear-Logic.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Experimenting With targetContentOffset: Part 2: Custom Pickers</title>
+        <description>&lt;p&gt;This post should be more fun than its &lt;a href=&quot;/2019/01/19/Experimenting-With-targetContentOffset-Part-1-Uneven-Pagination.html&quot;&gt;predecessor&lt;/a&gt;. We’re going to make a snappy picker control similar to &lt;code class=&quot;highlighter-rouge&quot;&gt;UIPickerView&lt;/code&gt;, utilizing (of course) &lt;code class=&quot;highlighter-rouge&quot;&gt;scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;I don’t intend this to be a tutorial, so this may not be up to your expectations. 😅&lt;/p&gt;
+
+&lt;p&gt;I also don’t intend this to be a library/resuable view. I like this to be a DIY (Do it yourself) guide in which you learn the concept then customize and create as freely as you want.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Final code is &lt;a href=&quot;https://github.com/ahmedk92/MoodPickerDemo&quot;&gt;here&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Enough talk, let’s work!&lt;/p&gt;
+
+&lt;h2 id=&quot;demo&quot;&gt;Demo&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://localhost:4000/assets/moodpicker.gif&quot; alt=&quot;moodpicker&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;idea&quot;&gt;Idea&lt;/h2&gt;
+
+&lt;p&gt;As we saw in the previous post, &lt;code class=&quot;highlighter-rouge&quot;&gt;scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)&lt;/code&gt; enables us to control at what point the ongoing scrolling animation should stop. I cannot &lt;strong&gt;&lt;em&gt;not&lt;/em&gt;&lt;/strong&gt; get excited when I think about this.&lt;/p&gt;
+
+&lt;p&gt;So, the idea is to “partition” the available content size of the collection view into chunks where each is of the same width which is a multiple of the total content size. Hence, when &lt;code class=&quot;highlighter-rouge&quot;&gt;scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)&lt;/code&gt; gets called, we can check at which partition &lt;code class=&quot;highlighter-rouge&quot;&gt;targetContentOffset&lt;/code&gt; lies. This gives us the target index of our item.&lt;/p&gt;
+
+&lt;p&gt;Now that we have the target index, we can calculate the content offset (point) that corresponds to that index. Multiplying the index by the width of each cell gives us the left-most point of the cell.&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;        &lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;targetIndex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;targetContentOffset&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pointee&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cellSize&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;width&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;fixing-rounding-bias&quot;&gt;Fixing Rounding Bias&lt;/h2&gt;
+
+&lt;p&gt;I’ve been talking about calculating an index. An index is an integer value; so how are we rounding that result of dividing &lt;code class=&quot;highlighter-rouge&quot;&gt;targetContentOffset&lt;/code&gt; by the cell size? To elaborate, the &lt;code class=&quot;highlighter-rouge&quot;&gt;targetContentOffset&lt;/code&gt; can be something like 199 while the cell size may be 50; so the division operation would result in 3.98. What value are going to choose? 3 or 4?&lt;/p&gt;
+
+&lt;p&gt;I don’t know the perfect rounding strategy here, but I suggest rounding with respect to the scrolling direction. That is, if we’re scrolling right, we round up, and round down if we’re scrolling left. We can know the scrolling direction via the &lt;code class=&quot;highlighter-rouge&quot;&gt;velocity&lt;/code&gt; parameter in &lt;code class=&quot;highlighter-rouge&quot;&gt;scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)&lt;/code&gt;; left is velocity &amp;lt; 0, right is velocity &amp;gt; 0.&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;        &lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;velocity&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ceil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;floor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This will run fine in most cases. However, we’ll get a not so pleasant result when the velocity is exactly zero. That’s if we consider a velocity of zero is either left or right, we can notice that “slow” scrolling is biased towards that direction. What I mean by slow scrolling is when your scrolling gesture is more of a slow pan rather than a quick swipe; something similar to the slide to answer gesture.&lt;/p&gt;
+
+&lt;p&gt;One solution to this problem is to add half the width of the cell to the &lt;code class=&quot;highlighter-rouge&quot;&gt;targetContentOffset&lt;/code&gt; before division. I went with that and works fine with one caveat. When scrolling to the last item, this way of rounding results in an index value greater than the last valid item index by one. I work around this by &lt;a href=&quot;https://en.wikipedia.org/wiki/Clamping_(graphics)&quot;&gt;clamping&lt;/a&gt; the resulting index.&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;        &lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;targetIndex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;targetContentOffset&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pointee&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cellSize&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;width&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cellSize&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;width&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;velocity&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ceil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;floor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;clamped&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;minValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;maxValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;CGFloat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emojis&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;count&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;targetContentOffset&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pointee&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cellSize&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;width&lt;/span&gt;
+        
+        &lt;span class=&quot;n&quot;&gt;index&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;targetIndex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;insets&quot;&gt;Insets&lt;/h2&gt;
+
+&lt;p&gt;If we implement till this point, we’ll find that there are a couple of cells at the left side that we can’t center. This is because they’re logically at the correct content offset (i.e. The first should be at zero). So, what we need to change here the edge insets of our collection view. We need to inset horizontally with enough amount that the left-most cell is centered (screen-wise), and similarly for the right-most, while maintaining correct content offsets.&lt;/p&gt;
+
+&lt;p&gt;The needed inset amount is equal to half the width of the screen minus half the width of the cell.&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;viewDidLayoutSubviews&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;spacing&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;collectionView&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bounds&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;width&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cellSize&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;width&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+     &lt;span class=&quot;kd&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;collectionView&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;collectionView&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UICollectionView&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;layout&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;collectionViewLayout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UICollectionViewLayout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;insetForSectionAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;section&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIEdgeInsets&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UIEdgeInsets&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;top&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;left&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;spacing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;bottom&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;right&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;spacing&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;note&quot;&gt;Note&lt;/h2&gt;
+
+&lt;p&gt;As &lt;a href=&quot;https://twitter.com/iAmrMohamed/status/1091955349744177152?s=20&quot;&gt;Amr Mohammd&lt;/a&gt; commented, in case of using &lt;code class=&quot;highlighter-rouge&quot;&gt;UICollectionView&lt;/code&gt; we can avoid the maths done in our &lt;code class=&quot;highlighter-rouge&quot;&gt;scrollViewWillEndDragging&lt;/code&gt; method by utilizing &lt;code class=&quot;highlighter-rouge&quot;&gt;UICollectionView.indexPathForItem(at:)&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;language-swift highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;point&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;CGPoint&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;targetContentOffset&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pointee&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;scrollView&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;frame&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;midX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;targetContentOffset&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pointee&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;guard&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;indexPath&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;collectionView&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;indexPathForItem&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;at&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;point&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;index&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;indexPath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;row&lt;/span&gt;
+        
+        &lt;span class=&quot;n&quot;&gt;targetContentOffset&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pointee&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;CGFloat&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cellSize&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;width&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Nothing so fancy. I hope you find it useful. Full demo source is &lt;a href=&quot;https://github.com/ahmedk92/MoodPickerDemo&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Sun, 03 Feb 2019 00:12:07 +0200</pubDate>
+        <link>http://localhost:4000/2019/02/03/Experimenting-With-targetContentOffset-Part-2-Custom-Pickers.html</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/02/03/Experimenting-With-targetContentOffset-Part-2-Custom-Pickers.html</guid>
         
         
       </item>

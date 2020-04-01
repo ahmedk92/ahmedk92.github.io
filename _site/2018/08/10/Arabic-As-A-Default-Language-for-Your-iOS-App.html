@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Arabic As A Default Language for Your iOS App</title>
+  <meta name="description" content="This was originally an answer I wrote in our local iOS Developers in Egypt Facebook group.">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="http://localhost:4000/2018/08/10/Arabic-As-A-Default-Language-for-Your-iOS-App.html">
+  <link rel="alternate" type="application/rss+xml" title="Ahmed Khalaf" href="http://localhost:4000/feed.xml">
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">Ahmed Khalaf</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Arabic As A Default Language for Your iOS App</h1>
+    <p class="post-meta"><time datetime="2018-08-10T17:34:00+02:00" itemprop="datePublished">Aug 10, 2018</time></p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>This was originally an answer I wrote in <a href="https://web.facebook.com/groups/356582147768070">our local iOS Developers in Egypt Facebook group</a>.</p>
+
+<hr />
+<p>Sometimes you want to make an Arabic-only app. Or you may want to support some languages, but you want Arabic to be the default app language. Here we see how it’s done, as it’s not intuitive to figure out.</p>
+
+<h2 id="scenario-1-the-apps-single-language-is-arabic">Scenario 1: The app’s single language is Arabic</h2>
+
+<p>You may be tempted to layout your views directly in Xcode’s Interface Builder exactly as your design guide suggests. For example, if your design is like the image below, you may decide to put the button on the leading side, and the textfield on the trailing side.</p>
+
+<p><img src="http://localhost:4000/assets/design.png" alt="design" /></p>
+
+<p>The problem with this approach is that iOS will consider this to be how you want your app to look in Left-to-Right mode. That is, back buttons in the navigation bar stil will be by default on the left, alongside the navigation controller’s back swipe gesture.</p>
+
+<p>So, the better option is to implement it as if your project is localized. That is, Put the textfield on the leading side, and the button on the trailing side. But you may ask, what will flip our views to give us our desired outcome?</p>
+
+<h3 id="answer-cfbundledevelopmentregion">Answer: <code class="highlighter-rouge">CFBundleDevelopmentRegion</code></h3>
+
+<ol>
+  <li>Open your project’s <code class="highlighter-rouge">info.plist</code> as source code (Right-click -&gt; open as source code).</li>
+  <li>Look for <code class="highlighter-rouge">CFBundleDevelopmentRegion</code>. You’ll probably find it something like <code class="highlighter-rouge">$(DEVELOPMENT_LANGUAGE)</code>. Change that to <code class="highlighter-rouge">ar</code>.</li>
+</ol>
+
+<p>That’s it. Run your project and enjoy your flipped interface.</p>
+
+<p>However, I don’t like this approach. As it may leave your project with a somewhat nonesensical project configuration. I mean, if you open your project settings (not target settings), you’ll find these configurations in the Localization section:</p>
+
+<p><img src="http://localhost:4000/assets/localizationsettings.png" alt="localizationsettings" /></p>
+
+<p>It says English is the development language, while it’s really not the case. While you can remove it, and add Arabic, you dont’ get the <code class="highlighter-rouge">- Development Language</code> part infront of it. Also, Xcode will generate Arabic localization files for your storyboars which you probably don’t need.</p>
+
+<p>I prefer the following approach albeit a bit hacky.</p>
+
+<p>Steps:</p>
+
+<ol>
+  <li>Navigate to your <code class="highlighter-rouge">project.xcodeproj</code>.</li>
+  <li>Right-click and choose Show Package Contents.</li>
+  <li>Open <code class="highlighter-rouge">project.pbxproj</code> with a text editor.</li>
+  <li><code class="highlighter-rouge">⌘</code> + <code class="highlighter-rouge">F</code> and look for the word <code class="highlighter-rouge">region</code>. You should find two matches, <code class="highlighter-rouge">developmentRegion</code> and <code class="highlighter-rouge">knownRegions</code>. Change the <code class="highlighter-rouge">en</code> in their values to <code class="highlighter-rouge">ar</code>, like the image below.</li>
+</ol>
+
+<p><img src="http://localhost:4000/assets/regions.png" alt="regions" /></p>
+
+<p>That’s it. You get Arabic as the development language.</p>
+
+<p><img src="http://localhost:4000/assets/localizationsettingsar.png" alt="localizationsettingsar" /></p>
+
+<hr />
+
+<h2 id="scenario-2-arabic-as-first-language-in-a-localized-app">Scenario 2: Arabic as first language in a localized app</h2>
+
+<p>Your app is already localized. You support multiple languages. But you want the first run of your app to be in Arabic, and the user can change that later. What to do?</p>
+
+<p>Before we begin, it’s better to know how iOS choose the right language for our app. It’s explained <a href="https://developer.apple.com/library/archive/qa/qa1828/_index.html">here in this official Q&amp;A</a>, but I’ll write the gist of it.</p>
+
+<p>iOS selects the first language in the user’s language preferences list (in <code class="highlighter-rouge">General</code> &gt; <code class="highlighter-rouge">Language &amp; Region</code> of the <code class="highlighter-rouge">Settings</code> application). Then looks in your project for a matching <code class="highlighter-rouge">.lproj</code> folder. Such folder contains the relevant <code class="highlighter-rouge">.strings</code> files for the localized resource (e.g. Storyboard). Every language you support has a <code class="highlighter-rouge">.lproj</code> folder with the language prefix, e.g. <code class="highlighter-rouge">ar.lproj</code>, <code class="highlighter-rouge">en.lproj</code>, …etc. So, on app start, iOS selects the localization that <strong>it sees correct, and doesn’t refer to you (the developer) for such decision</strong>.</p>
+
+<p>That is for apps supporting languages in the user’s language preferences list. If the user’s language preferences list doesn’t match any <code class="highlighter-rouge">.lproj</code> folders in your app, iOS uses the <code class="highlighter-rouge">CFBundleDevelopmentRegion</code>. And that’s basically how things work in <strong>Scenario 1</strong> above.</p>
+
+<p>So, our task here is to bypass that preferences list check. Fortunately, iOS seems to store a copy of such preferences list in each app’s user defaults. So if you want tp retrieve it in run-time, you can query it like this:</p>
+
+<div class="language-objc highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">NSUserDefaults</span><span class="o">*</span> <span class="n">defs</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSUserDefaults</span> <span class="nf">standardUserDefaults</span><span class="p">];</span>
+<span class="n">NSArray</span><span class="o">*</span> <span class="n">languages</span> <span class="o">=</span> <span class="p">[</span><span class="n">defs</span> <span class="nf">objectForKey</span><span class="p">:</span><span class="s">@"AppleLanguages"</span><span class="p">];</span>
+<span class="n">NSString</span><span class="o">*</span> <span class="n">preferredLang</span> <span class="o">=</span> <span class="p">[</span><span class="n">languages</span> <span class="nf">objectAtIndex</span><span class="p">:</span><span class="mi">0</span><span class="p">];</span>
+<span class="n">NSLog</span><span class="p">(</span><span class="s">@"Current language is %@"</span><span class="p">,</span> <span class="n">preferredLang</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>This is a <a href="https://developer.apple.com/library/archive/samplecode/InternationalMountains/Listings/InternationalMountains_DetailViewController_m.html">code snippet</a> from Apple Samples on Localization.</p>
+
+<p>Fortunately, this user defaults entry is writable. So, we can replace that preferences list with one of our own. An array of language identifiers where Arabic is the first is enough for Arabic to be the default, e.g. <code class="highlighter-rouge">["ar"]</code>.</p>
+
+<p>So far so good. Now the question left is where to set that new array?</p>
+
+<p><code class="highlighter-rouge">application:didFinishLaunchingWithOptions:</code> is not early enough to set such key. The true starting point of any iOS app is a function called <code class="highlighter-rouge">main</code>. It may be unkown to Swift iOS developers, but it’s well-known for those who worked with Objective-C.</p>
+
+<p>In Objective-C projects, you can easily find it in a file called <code class="highlighter-rouge">main.m</code>. It looks like this:</p>
+
+<p>Objective-C:</p>
+<div class="language-objc highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#import &lt;UIKit/UIKit.h&gt;
+#import "AppDelegate.h"
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="k">@autoreleasepool</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">UIApplicationMain</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="nb">nil</span><span class="p">,</span> <span class="n">NSStringFromClass</span><span class="p">([</span><span class="n">AppDelegate</span> <span class="nf">class</span><span class="p">]));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>In Swift projects, it’s a bit weird. As described in <a href="https://www.hackingwithswift.com/example-code/uikit/how-to-subclass-uiapplication-using-uiapplicationmain">Hacking with Swift</a>, you need to delete <code class="highlighter-rouge">@UIApplicationMain</code> from your <code class="highlighter-rouge">AppDelegate</code>  class, then add a file <strong><em>exactly</em></strong> named <code class="highlighter-rouge">main.swift</code>. For our purpose, the <code class="highlighter-rouge">main.swift</code> file will look like this:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">MyApplication</span><span class="p">:</span> <span class="kt">UIApplication</span> <span class="p">{</span>
+    <span class="k">override</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nv">notFirstOpenKey</span> <span class="o">=</span> <span class="s">"notFirstOpen"</span>
+        <span class="k">let</span> <span class="nv">notFirstOpen</span> <span class="o">=</span> <span class="kt">UserDefaults</span><span class="o">.</span><span class="n">standard</span><span class="o">.</span><span class="nf">bool</span><span class="p">(</span><span class="nv">forKey</span><span class="p">:</span> <span class="n">notFirstOpenKey</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">notFirstOpen</span> <span class="o">==</span> <span class="kc">false</span> <span class="p">{</span>
+            <span class="kt">UserDefaults</span><span class="o">.</span><span class="n">standard</span><span class="o">.</span><span class="nf">set</span><span class="p">([</span><span class="s">"ar"</span><span class="p">],</span> <span class="nv">forKey</span><span class="p">:</span> <span class="s">"AppleLanguages"</span><span class="p">)</span>
+            <span class="kt">UserDefaults</span><span class="o">.</span><span class="n">standard</span><span class="o">.</span><span class="nf">set</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="nv">forKey</span><span class="p">:</span> <span class="n">notFirstOpenKey</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">super</span><span class="o">.</span><span class="nf">init</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">UIApplicationMain</span><span class="p">(</span>
+    <span class="kt">CommandLine</span><span class="o">.</span><span class="n">argc</span><span class="p">,</span>
+    <span class="kt">CommandLine</span><span class="o">.</span><span class="n">unsafeArgv</span><span class="p">,</span> 
+    <span class="kt">NSStringFromClass</span><span class="p">(</span><span class="kt">MyApplication</span><span class="o">.</span><span class="k">self</span><span class="p">),</span>
+    <span class="kt">NSStringFromClass</span><span class="p">(</span><span class="kt">AppDelegate</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>The bottom part, <code class="highlighter-rouge">UIApplicationMain</code>, is explained in the <a href="https://www.hackingwithswift.com/example-code/uikit/how-to-subclass-uiapplication-using-uiapplicationmain">Hacking with Swift article above</a>. What’s relevant to us here is the implementation of the <code class="highlighter-rouge">MyApplication</code> subclass.</p>
+
+<p>As you may be already understanding by now, <code class="highlighter-rouge">MyApplication</code> is our custom class implementation of <code class="highlighter-rouge">UIApplication</code>. So, its <code class="highlighter-rouge">init</code> method can be regarded as the very inception of our app; the first milliseconds of our app’s life. Here we can set the <code class="highlighter-rouge">AppleLanguages</code> key, and make use of its effect.</p>
+
+<p>In the code snippet above, I do an additional check to see if we’ve done this before; to avoid unwanted repitition.</p>
+
+<p>That’s it. We’re done. It’s finally over.</p>
+
+<h3 id="references">References</h3>
+<p><a href="https://www.ralfebert.de/ios-examples/xcode/change-development-language/">Changing default development language</a></p>
+
+  </div>
+
+</article>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Ahmed Khalaf</h2>
+
+    <div class="footer-col-wrapper">
+<!-- 
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>Ahmed Khalaf</li>
+          <li><a href="mailto:"></a></li>
+        </ul>
+      </div>
+ -->
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/ahmedk92"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">ahmedk92</span></a>
+
+          </li>
+          
+
+          
+          <li>
+            <a href="https://twitter.com/ahmedkhalaf_92"><span class="icon icon--twitter"><svg viewBox="0 0 16 16"><path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/></svg>
+</span><span class="username">ahmedkhalaf_92</span></a>
+
+          </li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

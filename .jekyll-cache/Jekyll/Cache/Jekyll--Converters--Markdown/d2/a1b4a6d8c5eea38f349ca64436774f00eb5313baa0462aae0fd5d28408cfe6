@@ -1,0 +1,3 @@
+I"�<p><a href="https://github.com/MoathOthman/MOLH/">MOLH</a> is a popular library among developers whose audience are of Arabic background. It’s common for Arabic apps to support multiple languages, and also <strong>support changing between them without restarting</strong>. I wrote <a href="/2017/12/15/Acheiving-Dynamic-Localisation-in-iOS.html">here</a> how iOS doesn’t support that out-of-the-box and what were the possible workarounds back-then (this was a write-up for a solution I reached before MOLH was made public).
+In this article I’ll try to briefly reiterate how MOLH works to reach to its limitation, and then try to find some solutions/workarounds.</p>
+:ET

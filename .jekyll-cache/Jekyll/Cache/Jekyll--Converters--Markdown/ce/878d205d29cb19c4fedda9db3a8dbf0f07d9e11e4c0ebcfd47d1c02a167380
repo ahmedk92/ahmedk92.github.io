@@ -1,0 +1,2 @@
+I"<p>Sometimes we need to show an alert, apply a gradient, or conditionally show another view controller on the startup of a view controller. We wish to do such thing in <code class="highlighter-rouge">viewDidLoad</code>, however we end up doing it in <code class="highlighter-rouge">viewDidAppear(_:)</code>. This is because such purposes have requirements that are not fulfilled when <code class="highlighter-rouge">viewDidLoad</code> executes; e.g. frames are not yet correct, view hierarchy is not ready, …etc.</p>
+:ET

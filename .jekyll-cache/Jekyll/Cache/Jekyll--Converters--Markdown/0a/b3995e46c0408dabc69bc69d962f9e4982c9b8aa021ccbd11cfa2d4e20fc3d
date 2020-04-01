@@ -1,0 +1,2 @@
+I"„<p>This post should be more fun than its <a href="/2019/01/19/Experimenting-With-targetContentOffset-Part-1-Uneven-Pagination.html">predecessor</a>. Weâ€™re going to make a snappy picker control similar to <code class="highlighter-rouge">UIPickerView</code>, utilizing (of course) <code class="highlighter-rouge">scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)</code>.</p>
+:ET

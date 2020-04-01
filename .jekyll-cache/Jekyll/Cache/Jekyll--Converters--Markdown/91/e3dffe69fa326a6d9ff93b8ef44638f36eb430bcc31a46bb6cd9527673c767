@@ -1,0 +1,27 @@
+I"�<p><code class="highlighter-rouge">UIWebView</code> had a helpful property named <code class="highlighter-rouge">paginationMode</code>. It gave you horizontal pagination out of the box; specifically using the values: <code class="highlighter-rouge">leftToRight</code>, and <code class="highlighter-rouge">rightToLeft</code>. However, <code class="highlighter-rouge">UIWebView</code> is going out of favor, and since iOS 8, Apple officially encourages using <code class="highlighter-rouge">WKWebView</code>. Unfortunately, <code class="highlighter-rouge">WKWebView</code> doesn’t have that property nor its equivalent out of the box.</p>
+
+<p>Thankfully, horizontal pagination (left and right) is doable using CSS. CSS has a helpful property called <code class="highlighter-rouge">column-width</code>. Using that results in segmenting the html body into columns of the specified width. So, the idea is as follows:</p>
+<ol>
+  <li>Set the <code class="highlighter-rouge">column-width</code> property of the body to the webview’s width.</li>
+  <li>Set the <code class="highlighter-rouge">height</code> property of the body to the webview’s height.</li>
+  <li>Set <code class="highlighter-rouge">isPagingEnabled</code> of the webview’s <code class="highlighter-rouge">scrollView</code> to true.</li>
+</ol>
+
+<p>That’s it (for left to right content though). It’s up to you where to set the above values. For example, you can do it in <code class="highlighter-rouge">webView(_:didFinish:)</code> of the webview’s <code class="highlighter-rouge">navigationDelegate</code>.</p>
+
+<h3 id="now-rtl-support">Now, RTL support.</h3>
+
+<p>It’s as simple as setting the <code class="highlighter-rouge">direction</code> style property of the html tag to <code class="highlighter-rouge">rtl</code>. But if that somehow badly affects your page, then you have to get more creative. One crazy solution is as follows:</p>
+<ol>
+  <li>Wrap all the contents of the <code class="highlighter-rouge">&lt;body&gt;</code> tag in one container <code class="highlighter-rouge">div</code>.</li>
+  <li>Set the <code class="highlighter-rouge">-webkit-transform</code> property of that div to <code class="highlighter-rouge">scale(-1, 1)</code>. (i.e. this results in horizontal mirroring)</li>
+  <li>Similarily, mirror the webview itself. (i.e. <code class="highlighter-rouge">webview.transform = CGAffeineTransform(scaledX: -1, y: 1)</code>)</li>
+</ol>
+
+<h3 id="credits">Credits:</h3>
+<p>Thanks to my friend and colleague <a href="https://www.linkedin.com/in/sayed-arfa/">Sayed Arfa</a> for suggesting <code class="highlighter-rouge">column-width</code> and overall inspiration.</p>
+
+<h1 id="update">Update</h1>
+
+<p>At the time of writing this post, I somehow missed this <a href="https://github.com/readium/architecture/issues/10">thread</a>. They suggested to use the undocumented(?) CSS property value <code class="highlighter-rouge">overflow:-webkit-paged-x</code>. This is more convenient than what’s explained above as it doesn’t need us to compute a width nor do additional work for RTL handling. However, it doesn’t seem reliable, as the chromium project seems to <a href="https://www.chromestatus.com/feature/5731653806718976">plan to remove it</a>.</p>
+:ET

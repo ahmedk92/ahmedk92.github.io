@@ -1,0 +1,111 @@
+I"R'<p>Sometimes we need to show an alert, apply a gradient, or conditionally show another view controller on the startup of a view controller. We wish to do such thing in <code class="highlighter-rouge">viewDidLoad</code>, however we end up doing it in <code class="highlighter-rouge">viewDidAppear(_:)</code>. This is because such purposes have requirements that are not fulfilled when <code class="highlighter-rouge">viewDidLoad</code> executes; e.g. frames are not yet correct, view hierarchy is not ready, …etc.</p>
+
+<p>One annoyance with <code class="highlighter-rouge">viewDidAppear(_:)</code> is that it can get called multiple times. For example, if you present a new view controller, then dismiss it sometime after, it gets called again. You have to handle such logic that shouldn’t be repeated.</p>
+
+<h2 id="solutions-that-work-but-i-dont-quite-like">Solutions that work, but I don’t quite like</h2>
+
+<h3 id="1-booleans">1. Booleans</h3>
+
+<p>One can introduce a <code class="highlighter-rouge">Bool</code> like <code class="highlighter-rouge">viewAppeared</code>; checking and setting it for once:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">var</span> <span class="nv">viewAppeared</span> <span class="o">=</span> <span class="kc">false</span>
+
+<span class="k">override</span> <span class="kd">func</span> <span class="nf">viewDidAppear</span><span class="p">(</span><span class="n">_</span> <span class="nv">animated</span><span class="p">:</span> <span class="kt">Bool</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">super</span><span class="o">.</span><span class="nf">viewDidAppear</span><span class="p">(</span><span class="n">animated</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="o">!</span><span class="n">viewAppeared</span> <span class="p">{</span>
+        <span class="c1">// Do non-repeatable logic...</span>
+    <span class="p">}</span>
+
+    <span class="n">viewAppeared</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>It works. However, I tend to try to avoid “state variables” as much as I can (doesn’t mean I succeed much 😅). Although they look simple, bugs find their way around them. And in this particular situation, you may need to repeat some check you did earlier in <code class="highlighter-rouge">viewDidLoad</code>, and it gets less nice:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span>
+
+<span class="k">override</span> <span class="kd">func</span> <span class="nf">viewDidLoad</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">super</span><span class="o">.</span><span class="nf">viewDidLoad</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="k">let</span> <span class="nv">name</span> <span class="o">=</span> <span class="n">name</span> <span class="p">{</span>
+        <span class="c1">// conditional initial setup </span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">override</span> <span class="kd">func</span> <span class="nf">viewDidAppear</span><span class="p">(</span><span class="n">_</span> <span class="nv">animated</span><span class="p">:</span> <span class="kt">Bool</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">super</span><span class="o">.</span><span class="nf">viewDidAppear</span><span class="p">(</span><span class="n">animated</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="o">!</span><span class="n">viewAppeared</span> <span class="p">{</span>
+
+        <span class="c1">// this check again</span>
+        <span class="k">if</span> <span class="k">let</span> <span class="nv">name</span> <span class="o">=</span> <span class="n">name</span> <span class="p">{</span>
+
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">viewAppeared</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<h3 id="2-deferring-with-gcd">2. Deferring with GCD</h3>
+
+<p>Magic. GCD helps in executing code <em>later</em>. There are two ways to do it for our need: <code class="highlighter-rouge">async</code> and <code class="highlighter-rouge">asyncAfter(deadline:execute:)</code>. We can use either in <code class="highlighter-rouge">viewDidLoad</code> to execute non-repeatable code “later enough”.</p>
+
+<p><code class="highlighter-rouge">asyncAfter(deadline:execute:)</code> is straight forward:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">override</span> <span class="kd">func</span> <span class="nf">viewDidLoad</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">super</span><span class="o">.</span><span class="nf">viewDidLoad</span><span class="p">()</span>
+
+    <span class="kt">DispatchQueue</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="nf">asyncAfter</span><span class="p">(</span><span class="nv">deadline</span><span class="p">:</span> <span class="o">.</span><span class="nf">now</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Non-repeated logic</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Why 0.1 seconds? No idea. It’s just late enough. It works, but it depends on a magic number, we don’t know exactly when this code runs.</p>
+
+<p>What about just <code class="highlighter-rouge">async</code>? It works too, no explicit delay needed. That’s because code in a <code class="highlighter-rouge">DispatchQueue.main.async</code> block <strong>is executed in the next <a href="https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html">run loop</a></strong>.</p>
+
+<p>Believe me, I’ve read a lot about run loops, I still don’t understand them much. However, for the main thread, you can interpret them as time slices in which the main thread accepts input, updates UI, calculate layouts, and more importantly <strong><em>“polls”</em> code enqueued via <code class="highlighter-rouge">DispatchQueue.main.async</code></strong>.</p>
+
+<p>So, When we dispatch code async on the main queue from the main thread, it doesn’t run immediately; it waits to be polled in the next run loop, leaving enough time for the requirements mentioned above to be fulfilled. Remember our blog post? 😂 Now let’s continue it. This GCD thing worth it’s own blog post.</p>
+
+<blockquote>
+  <p>If you look at code I wrote (I hope you don’t), you’ll find me guilty of using this to hack my way through. It’s not good, I don’t recommend it. We should invest more time to really solve latency problems rather than working around them.</p>
+</blockquote>
+
+<h2 id="a-better-solution">A Better Solution?</h2>
+
+<p>Here I suggest a solution that I think is better. GCD gave us a hint, we need to queue tasks on <code class="highlighter-rouge">viewDidLoad</code>; but execute it later. So, what about queuing it on <code class="highlighter-rouge">viewDidLoad</code>, then execute it on <code class="highlighter-rouge">viewDidAppear(_:)</code>?</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="k">var</span> <span class="nv">viewDidAppearQueue</span><span class="p">:</span> <span class="p">[()</span> <span class="o">-&gt;</span> <span class="p">()]</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">override</span> <span class="kd">func</span> <span class="nf">viewDidLoad</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">super</span><span class="o">.</span><span class="nf">viewDidLoad</span><span class="p">()</span>
+        
+    <span class="n">viewDidAppearQueue</span><span class="o">.</span><span class="n">append</span> <span class="p">{</span>
+        <span class="c1">// Our non-repeatable logic</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+    
+<span class="k">override</span> <span class="kd">func</span> <span class="nf">viewDidAppear</span><span class="p">(</span><span class="n">_</span> <span class="nv">animated</span><span class="p">:</span> <span class="kt">Bool</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">super</span><span class="o">.</span><span class="nf">viewDidAppear</span><span class="p">(</span><span class="n">animated</span><span class="p">)</span>
+        
+    <span class="c1">// Dequeue tasks and execute them in FIFO order</span>
+    <span class="k">while</span> <span class="o">!</span><span class="n">viewDidAppearQueue</span><span class="o">.</span><span class="n">isEmpty</span> <span class="p">{</span>
+        <span class="n">viewDidAppearQueue</span><span class="o">.</span><span class="nf">removeFirst</span><span class="p">()()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>We introduce a simple array of closures. We add our tasks as closures in <code class="highlighter-rouge">viewDidLoad</code>. Then in <code class="highlighter-rouge">viewDidAppear(_:)</code> we execute each closure and remove it from the array. If there are no tasks; nothing happens, just what we need.</p>
+
+<p>We also don’t need to weakly capture <code class="highlighter-rouge">self</code> (i.e. <code class="highlighter-rouge">[weak self] in</code>) when appending closures. This is because strong references to the closures are lost when we remove them from the array. So, we should be safe.</p>
+
+<p>Thanks for reading. Feedback is welcome.</p>
+
+:ET

@@ -1,0 +1,153 @@
+I"J<p>Here I should be listing (and categorizing) the most useful iOS Developer Twitter accounts to follow.</p>
+
+<p>Last week, I found myself taking a colleague in a tour through Twitter accounts and telling him about what accounts to follow if he wants to learn about specific something (about iOS). He responded, “you should share this.” So, driven by guilt (my #1 motivation), I write this in hope of someone finding it useful.</p>
+
+<blockquote>
+  <p>This is not an exhaustive list (for sure!); maybe I dropped someone (or more), and of course more creative people are going to rise in the future. Help me make this list age well!</p>
+</blockquote>
+
+<h2 id="teachers">Teachers</h2>
+<p>Amazing people who grok challenging subjects and write easy-to-digest articles and tutorials.</p>
+
+<ul>
+  <li><a href="https://twitter.com/johnsundell">John Sundell</a></li>
+  <li><a href="https://twitter.com/twostraws">Paul Hudson</a></li>
+  <li><a href="https://twitter.com/kharrison">Keith Harrison</a></li>
+  <li><a href="https://twitter.com/_bartjacobs">Bart Jacobs</a></li>
+</ul>
+
+<h2 id="golden-members">Golden Members</h2>
+<p>People I can’t imagine the iOS community without them.</p>
+<ul>
+  <li><a href="https://twitter.com/steipete">Peter Steinberger</a></li>
+  <li><a href="https://twitter.com/nicklockwood">Nick Lockwood</a></li>
+  <li><a href="https://twitter.com/rmayoff">Rob Mayoff</a></li>
+  <li><a href="https://twitter.com/davedelong">Dave DeLong</a></li>
+</ul>
+
+<h2 id="artists">Artists</h2>
+<p>Bright minds that write impressive articles regarding lesser known/niche topics.</p>
+
+<ul>
+  <li><a href="https://twitter.com/mattt">Matt Thompson</a></li>
+  <li><a href="https://twitter.com/khanlou">Soroush Khanlou</a></li>
+</ul>
+
+<h2 id="low-level">Low-level</h2>
+<p>They usually post on low-level stuff, performance, cryptography, …etc. Need high-usage of brain power to follow 😅</p>
+
+<ul>
+  <li><a href="https://twitter.com/mikeash">Mike Ash</a></li>
+  <li><a href="https://twitter.com/krzyzanowskim">Marcin Krzyzanowski</a></li>
+  <li><a href="https://twitter.com/cocoaphony">Rob Napier</a></li>
+  <li><a href="https://twitter.com/gparker">Greg Parker</a></li>
+  <li><a href="https://twitter.com/tkremenek">Ted Kremenek</a></li>
+</ul>
+
+<h2 id="text-rendering">Text Rendering</h2>
+<p>Text rendering is not a piece of cake, these people get it.</p>
+<ul>
+  <li><a href="https://twitter.com/_ryannystrom">Ryan Nystrom</a></li>
+  <li><a href="https://twitter.com/s_tolksdorf">Stephan Tolksdorf</a></li>
+  <li><a href="https://twitter.com/Cocoanetics">Oliver Drobnik (Cocoanetics)</a></li>
+</ul>
+
+<h2 id="graphics--math">Graphics &amp; Math</h2>
+<ul>
+  <li><a href="https://twitter.com/bciechanowski">Bartosz Ciechanowski</a></li>
+</ul>
+
+<h2 id="webkit">Webkit</h2>
+<ul>
+  <li><a href="https://twitter.com/bradeeoh">Brady Eidson</a></li>
+  <li><a href="https://twitter.com/rmondello">Ricky Mondello</a></li>
+</ul>
+
+<h2 id="misc">Misc</h2>
+<p>They write useful stuff; I just cannot categorize 😂</p>
+<ul>
+  <li><a href="https://twitter.com/mxcl">Max Howell</a></li>
+  <li><a href="https://twitter.com/merowing_">Krzysztof Zabłocki</a></li>
+  <li><a href="https://twitter.com/arekholko">Arek Holko</a></li>
+  <li><a href="https://twitter.com/albertodebo">Alberto De Bortoli</a></li>
+  <li><a href="https://twitter.com/sandofsky">Ben Sandofsky</a></li>
+</ul>
+
+<h2 id="swift-creators">Swift Creators</h2>
+<p>People behind the Swift Programming Language.</p>
+
+<ul>
+  <li><a href="https://twitter.com/clattner_llvm">Chris Lattner</a></li>
+  <li><a href="https://twitter.com/jckarter">Joe Groff</a></li>
+  <li><a href="https://twitter.com/slava_pestov">Slava Pestov</a></li>
+  <li><a href="https://twitter.com/dgregor79">Doug Gregor</a></li>
+  <li><a href="https://twitter.com/UINT_MIN">Jordan Rose</a></li>
+</ul>
+
+<h2 id="swift-enthusiasts">Swift enthusiasts</h2>
+<p>Not saying people not on this list aren’t.</p>
+
+<ul>
+  <li><a href="https://twitter.com/simjp">JP Simard</a></li>
+  <li><a href="https://twitter.com/mdiep">Matt Diephouse</a></li>
+  <li><a href="https://twitter.com/gregheo">Greg Heo</a></li>
+</ul>
+
+<h2 id="functional-swift">Functional Swift</h2>
+<p>They take a functiinal approach with Swift programming.</p>
+<ul>
+  <li><a href="https://twitter.com/peres">Rui Peres</a></li>
+  <li><a href="https://twitter.com/stephencelis">Stephen Celis</a></li>
+</ul>
+
+<h2 id="testing">Testing</h2>
+<p>Automated testing and TDD.</p>
+<ul>
+  <li><a href="https://twitter.com/qcoding">Jon Reid</a></li>
+  <li><a href="https://twitter.com/aikoniv">Brian Croom</a></li>
+</ul>
+
+<h2 id="tooling">Tooling</h2>
+<p>People behind tools such as Fastlane, Cocoapods, …etc.</p>
+<ul>
+  <li><a href="https://twitter.com/KrauseFx">Felix Krause</a></li>
+  <li><a href="https://twitter.com/SmileyKeith">Keith Smiley</a></li>
+  <li><a href="https://twitter.com/segiddins">Samuel Giddins</a></li>
+  <li><a href="https://twitter.com/orta">Orta Therox</a></li>
+</ul>
+
+<h2 id="subscriptions-and-in-app-purchases">Subscriptions and In-app Purchases</h2>
+<ul>
+  <li><a href="https://twitter.com/jeiting">Jacob Eiting</a></li>
+</ul>
+
+<h2 id="students">Students</h2>
+<p>Not belittling them of course, but despite their young age, they’re incredibely talented.</p>
+
+<ul>
+  <li><a href="https://twitter.com/HarshilShah1910">Harshil Shah</a></li>
+  <li><a href="https://twitter.com/BalestraPatrick">Patrick Palestra</a></li>
+</ul>
+
+<h2 id="aliens">Aliens</h2>
+<p>Reverse engineering wizardry and stuff I don’t understand yet impressed with.</p>
+
+<ul>
+  <li><a href="https://twitter.com/_inside">Guilherme Rambo</a></li>
+  <li><a href="https://twitter.com/stroughtonsmith">Steve Troughton-Smith</a></li>
+</ul>
+
+<h2 id="learning-sites">Learning Sites</h2>
+<ul>
+  <li><a href="https://twitter.com/objcio">ObjC.io</a></li>
+  <li><a href="https://twitter.com/rwenderlich">Ray Wenderlich</a></li>
+</ul>
+
+<h2 id="rising-stars">Rising Stars</h2>
+<ul>
+  <li><a href="https://twitter.com/V8tr">Vadim Bulavin</a></li>
+  <li><a href="https://twitter.com/twannl">Antoine v.d. SwiftLee</a></li>
+  <li><a href="https://twitter.com/mmabdellateef">Mostafa Abdellateef</a></li>
+  <li><a href="https://twitter.com/DonnyWals">Donny Wals</a></li>
+</ul>
+:ET

@@ -1,0 +1,2 @@
+I"�<p>One of the first lessons we learn in iOS development is that UIKit classes (<code class="highlighter-rouge">UILabel</code>, <code class="highlighter-rouge">UIImageView</code>, …etc) shouldn’t be touched outside the main thread. Sometimes we learn it <a href="https://stackoverflow.com/a/12927485/715593">the hard way</a>. However, <strong>this doesn’t mean we cannot do any form of rendering off the main thread</strong>.</p>
+:ET

@@ -1,0 +1,78 @@
+I"&/<p>This post should be more fun than its <a href="/2019/01/19/Experimenting-With-targetContentOffset-Part-1-Uneven-Pagination.html">predecessor</a>. We’re going to make a snappy picker control similar to <code class="highlighter-rouge">UIPickerView</code>, utilizing (of course) <code class="highlighter-rouge">scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)</code>.</p>
+
+<p>I don’t intend this to be a tutorial, so this may not be up to your expectations. 😅</p>
+
+<p>I also don’t intend this to be a library/resuable view. I like this to be a DIY (Do it yourself) guide in which you learn the concept then customize and create as freely as you want.</p>
+
+<blockquote>
+  <p>Final code is <a href="https://github.com/ahmedk92/MoodPickerDemo">here</a></p>
+</blockquote>
+
+<p>Enough talk, let’s work!</p>
+
+<h2 id="demo">Demo</h2>
+
+<p><img src="http://localhost:4000/assets/moodpicker.gif" alt="moodpicker" /></p>
+
+<h2 id="idea">Idea</h2>
+
+<p>As we saw in the previous post, <code class="highlighter-rouge">scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)</code> enables us to control at what point the ongoing scrolling animation should stop. I cannot <strong><em>not</em></strong> get excited when I think about this.</p>
+
+<p>So, the idea is to “partition” the available content size of the collection view into chunks where each is of the same width which is a multiple of the total content size. Hence, when <code class="highlighter-rouge">scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)</code> gets called, we can check at which partition <code class="highlighter-rouge">targetContentOffset</code> lies. This gives us the target index of our item.</p>
+
+<p>Now that we have the target index, we can calculate the content offset (point) that corresponds to that index. Multiplying the index by the width of each cell gives us the left-most point of the cell.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">var</span> <span class="nv">targetIndex</span> <span class="o">=</span> <span class="n">targetContentOffset</span><span class="o">.</span><span class="n">pointee</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="n">cellSize</span><span class="o">.</span><span class="n">width</span>
+</code></pre></div></div>
+
+<h2 id="fixing-rounding-bias">Fixing Rounding Bias</h2>
+
+<p>I’ve been talking about calculating an index. An index is an integer value; so how are we rounding that result of dividing <code class="highlighter-rouge">targetContentOffset</code> by the cell size? To elaborate, the <code class="highlighter-rouge">targetContentOffset</code> can be something like 199 while the cell size may be 50; so the division operation would result in 3.98. What value are going to choose? 3 or 4?</p>
+
+<p>I don’t know the perfect rounding strategy here, but I suggest rounding with respect to the scrolling direction. That is, if we’re scrolling right, we round up, and round down if we’re scrolling left. We can know the scrolling direction via the <code class="highlighter-rouge">velocity</code> parameter in <code class="highlighter-rouge">scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)</code>; left is velocity &lt; 0, right is velocity &gt; 0.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="n">targetIndex</span> <span class="o">=</span> <span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">?</span> <span class="nf">ceil</span><span class="p">(</span><span class="n">targetIndex</span><span class="p">)</span> <span class="p">:</span> <span class="nf">floor</span><span class="p">(</span><span class="n">targetIndex</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>This will run fine in most cases. However, we’ll get a not so pleasant result when the velocity is exactly zero. That’s if we consider a velocity of zero is either left or right, we can notice that “slow” scrolling is biased towards that direction. What I mean by slow scrolling is when your scrolling gesture is more of a slow pan rather than a quick swipe; something similar to the slide to answer gesture.</p>
+
+<p>One solution to this problem is to add half the width of the cell to the <code class="highlighter-rouge">targetContentOffset</code> before division. I went with that and works fine with one caveat. When scrolling to the last item, this way of rounding results in an index value greater than the last valid item index by one. I work around this by <a href="https://en.wikipedia.org/wiki/Clamping_(graphics)">clamping</a> the resulting index.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">var</span> <span class="nv">targetIndex</span> <span class="o">=</span> <span class="p">(</span><span class="n">targetContentOffset</span><span class="o">.</span><span class="n">pointee</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">cellSize</span><span class="o">.</span><span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">cellSize</span><span class="o">.</span><span class="n">width</span>
+        <span class="n">targetIndex</span> <span class="o">=</span> <span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">?</span> <span class="nf">ceil</span><span class="p">(</span><span class="n">targetIndex</span><span class="p">)</span> <span class="p">:</span> <span class="nf">floor</span><span class="p">(</span><span class="n">targetIndex</span><span class="p">)</span>
+        <span class="n">targetIndex</span> <span class="o">=</span> <span class="n">targetIndex</span><span class="o">.</span><span class="nf">clamped</span><span class="p">(</span><span class="nv">minValue</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nv">maxValue</span><span class="p">:</span> <span class="kt">CGFloat</span><span class="p">(</span><span class="n">emojis</span><span class="o">.</span><span class="n">count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">targetContentOffset</span><span class="o">.</span><span class="n">pointee</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">targetIndex</span> <span class="o">*</span> <span class="n">cellSize</span><span class="o">.</span><span class="n">width</span>
+        
+        <span class="n">index</span> <span class="o">=</span> <span class="kt">Int</span><span class="p">(</span><span class="n">targetIndex</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="insets">Insets</h2>
+
+<p>If we implement till this point, we’ll find that there are a couple of cells at the left side that we can’t center. This is because they’re logically at the correct content offset (i.e. The first should be at zero). So, what we need to change here the edge insets of our collection view. We need to inset horizontally with enough amount that the left-most cell is centered (screen-wise), and similarly for the right-most, while maintaining correct content offsets.</p>
+
+<p>The needed inset amount is equal to half the width of the screen minus half the width of the cell.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">override</span> <span class="kd">func</span> <span class="nf">viewDidLayoutSubviews</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">spacing</span> <span class="o">=</span> <span class="n">collectionView</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">cellSize</span><span class="o">.</span><span class="n">width</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="p">}</span>
+
+     <span class="kd">func</span> <span class="nf">collectionView</span><span class="p">(</span><span class="n">_</span> <span class="nv">collectionView</span><span class="p">:</span> <span class="kt">UICollectionView</span><span class="p">,</span> <span class="n">layout</span> <span class="nv">collectionViewLayout</span><span class="p">:</span> <span class="kt">UICollectionViewLayout</span><span class="p">,</span> <span class="n">insetForSectionAt</span> <span class="nv">section</span><span class="p">:</span> <span class="kt">Int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">UIEdgeInsets</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kt">UIEdgeInsets</span><span class="p">(</span><span class="nv">top</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nv">left</span><span class="p">:</span> <span class="n">spacing</span><span class="p">,</span> <span class="nv">bottom</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nv">right</span><span class="p">:</span> <span class="n">spacing</span><span class="p">)</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="note">Note</h2>
+
+<p>As <a href="https://twitter.com/iAmrMohamed/status/1091955349744177152?s=20">Amr Mohammd</a> commented, in case of using <code class="highlighter-rouge">UICollectionView</code> we can avoid the maths done in our <code class="highlighter-rouge">scrollViewWillEndDragging</code> method by utilizing <code class="highlighter-rouge">UICollectionView.indexPathForItem(at:)</code>.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">let</span> <span class="nv">point</span> <span class="o">=</span> <span class="kt">CGPoint</span><span class="p">(</span><span class="nv">x</span><span class="p">:</span> <span class="n">targetContentOffset</span><span class="o">.</span><span class="n">pointee</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">scrollView</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">midX</span><span class="p">,</span> <span class="nv">y</span><span class="p">:</span> <span class="n">targetContentOffset</span><span class="o">.</span><span class="n">pointee</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">guard</span> <span class="k">let</span> <span class="nv">indexPath</span> <span class="o">=</span> <span class="n">collectionView</span><span class="o">.</span><span class="nf">indexPathForItem</span><span class="p">(</span><span class="nv">at</span><span class="p">:</span> <span class="n">point</span><span class="p">)</span> <span class="k">else</span> <span class="p">{</span> <span class="k">return</span> <span class="p">}</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">indexPath</span><span class="o">.</span><span class="n">row</span>
+        
+        <span class="n">targetContentOffset</span><span class="o">.</span><span class="n">pointee</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="kt">CGFloat</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">*</span> <span class="n">cellSize</span><span class="o">.</span><span class="n">width</span>
+</code></pre></div></div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Nothing so fancy. I hope you find it useful. Full demo source is <a href="https://github.com/ahmedk92/MoodPickerDemo">here</a>.</p>
+:ET

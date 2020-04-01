@@ -1,0 +1,87 @@
+I">(<p>It’s not uncommon to see a variable in some codebase that looks like this:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="nv">isAlertShown</span><span class="p">:</span> <span class="kt">Bool</span>
+</code></pre></div></div>
+
+<p>Or:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="nv">pageIndex</span><span class="p">:</span> <span class="kt">Int</span>
+</code></pre></div></div>
+
+<p>Such variables are used in order to track some <strong>state</strong>. 
+Let’s see an example, a contrived one:</p>
+
+<p>We are going to show an alert whenever the app receives a remote notification. But we want to avoid attempting to present a new one if an alert is already shown. 
+So we are going to use a <code class="highlighter-rouge">UIAlertController</code> for this task. 
+One may write code like this:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">ViewController</span><span class="p">:</span> <span class="kt">UIViewController</span> <span class="p">{</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">isAlertShown</span> <span class="o">=</span> <span class="kc">false</span>
+
+    <span class="kd">private</span> <span class="kd">func</span> <span class="nf">showAlert</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">guard</span> <span class="o">!</span><span class="n">isAlertShown</span> <span class="k">else</span> <span class="p">{</span> <span class="k">return</span> <span class="p">}</span>
+        <span class="k">let</span> <span class="nv">alert</span> <span class="o">=</span> <span class="kt">UIAlertController</span><span class="p">(</span><span class="nv">title</span><span class="p">:</span> <span class="s">"New Message!"</span><span class="p">,</span> <span class="nv">message</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nv">preferredStyle</span><span class="p">:</span> <span class="o">.</span><span class="n">alert</span><span class="p">)</span>
+        <span class="n">alert</span><span class="o">.</span><span class="nf">addAction</span><span class="p">(</span><span class="kt">UIAlertAction</span><span class="p">(</span><span class="nv">title</span><span class="p">:</span> <span class="s">"OK"</span><span class="p">,</span> <span class="nv">style</span><span class="p">:</span> <span class="o">.</span><span class="n">cancel</span><span class="p">,</span> <span class="nv">handler</span><span class="p">:</span> <span class="p">{</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">in</span>
+            <span class="k">self</span><span class="o">.</span><span class="n">isAlertShown</span> <span class="o">=</span> <span class="kc">false</span>
+        <span class="p">}))</span>
+    
+        <span class="n">isAlertShown</span> <span class="o">=</span> <span class="kc">true</span>
+    
+        <span class="nf">present</span><span class="p">(</span><span class="n">alert</span><span class="p">,</span> <span class="nv">animated</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nv">completion</span><span class="p">:</span> <span class="kc">nil</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Here we’re using <code class="highlighter-rouge">isAlertShown</code> to track the state telling if our alert is shown or not. 
+We have to <strong>mutate this variable correctly to ensure it correctly represents the actual state of whether the alert is shown or not</strong>.
+However, if the alert got dismissed by any other mean than our cancel action, the variable <code class="highlighter-rouge">isAlertShown</code> will have a wrong value.</p>
+
+<p>The reason is <code class="highlighter-rouge">isAlertShown</code> is not the <em>source of truth</em>. We can avoid such bug if we <em>queried</em> a fresh value from the ever-changing environment itself. 
+For this particular example, we can check if the <code class="highlighter-rouge">presentedViewController</code> property is of type <code class="highlighter-rouge">UIAlertController</code>. Like this:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">ViewController</span><span class="p">:</span> <span class="kt">UIViewController</span> <span class="p">{</span>
+    <span class="kd">private</span> <span class="k">var</span> <span class="nv">isAlertShown</span><span class="p">:</span> <span class="kt">Bool</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">presentedViewController</span> <span class="k">is</span> <span class="kt">UIAlertController</span>
+    <span class="p">}</span>
+
+    <span class="kd">private</span> <span class="kd">func</span> <span class="nf">showAlert</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">guard</span> <span class="o">!</span><span class="n">isAlertShown</span> <span class="k">else</span> <span class="p">{</span> <span class="k">return</span> <span class="p">}</span>
+        
+        <span class="k">let</span> <span class="nv">alert</span> <span class="o">=</span> <span class="kt">UIAlertController</span><span class="p">(</span><span class="nv">title</span><span class="p">:</span> <span class="s">"New Message!"</span><span class="p">,</span> <span class="nv">message</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nv">preferredStyle</span><span class="p">:</span> <span class="o">.</span><span class="n">alert</span><span class="p">)</span>
+        <span class="n">alert</span><span class="o">.</span><span class="nf">addAction</span><span class="p">(</span><span class="kt">UIAlertAction</span><span class="p">(</span><span class="nv">title</span><span class="p">:</span> <span class="s">"OK"</span><span class="p">,</span> <span class="nv">style</span><span class="p">:</span> <span class="o">.</span><span class="n">cancel</span><span class="p">,</span> <span class="nv">handler</span><span class="p">:</span> <span class="kc">nil</span><span class="p">))</span>
+
+        <span class="nf">present</span><span class="p">(</span><span class="n">alert</span><span class="p">,</span> <span class="nv">animated</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nv">completion</span><span class="p">:</span> <span class="kc">nil</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Alternatively, we can use a weak reference if we want to be sure that the presented alert is a particular one.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="kt">ViewController</span><span class="p">:</span> <span class="kt">UIViewController</span> <span class="p">{</span>
+    <span class="kd">private</span> <span class="k">weak</span> <span class="k">var</span> <span class="nv">shownAlert</span><span class="p">:</span> <span class="kt">UIAlertController</span><span class="p">?</span>
+
+    <span class="kd">private</span> <span class="kd">func</span> <span class="nf">showAlert</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">guard</span> <span class="n">shownAlert</span> <span class="o">==</span> <span class="kc">nil</span> <span class="k">else</span> <span class="p">{</span> <span class="k">return</span> <span class="p">}</span>
+        
+        <span class="k">let</span> <span class="nv">alert</span> <span class="o">=</span> <span class="kt">UIAlertController</span><span class="p">(</span><span class="nv">title</span><span class="p">:</span> <span class="s">"New Message!"</span><span class="p">,</span> <span class="nv">message</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nv">preferredStyle</span><span class="p">:</span> <span class="o">.</span><span class="n">alert</span><span class="p">)</span>
+        <span class="n">alert</span><span class="o">.</span><span class="nf">addAction</span><span class="p">(</span><span class="kt">UIAlertAction</span><span class="p">(</span><span class="nv">title</span><span class="p">:</span> <span class="s">"OK"</span><span class="p">,</span> <span class="nv">style</span><span class="p">:</span> <span class="o">.</span><span class="n">cancel</span><span class="p">,</span> <span class="nv">handler</span><span class="p">:</span> <span class="kc">nil</span><span class="p">))</span>
+
+        <span class="n">shownAlert</span> <span class="o">=</span> <span class="n">alert</span>
+
+        <span class="nf">present</span><span class="p">(</span><span class="n">alert</span><span class="p">,</span> <span class="nv">animated</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nv">completion</span><span class="p">:</span> <span class="kc">nil</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Once it’s dismissed, by any means, the weak reference will be nil. No need for mutations.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>So, I think the idea is clear now.
+Want to track the download status of some book? <strong>Infer</strong> it from the existence of the relevant files.
+Want to track the current index of a paged <code class="highlighter-rouge">UICollectionView</code>? <strong>Infer</strong> it from the relation of the <code class="highlighter-rouge">contentOffset</code> to the <code class="highlighter-rouge">contentSize</code>.</p>
+
+<p>This principle is discussed on the <a href="http://google.com/search?q=single+source+of+truth">web</a>. However, it’s more data (or database) oriented.
+So, I wanted to discuss it in a close-to-UI context, where we, iOS developers, spend a significant time.</p>
+
+<p>Thanks for reading!</p>
+:ET

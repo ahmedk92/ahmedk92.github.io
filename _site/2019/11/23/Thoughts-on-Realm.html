@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Thoughts on Realm</title>
+  <meta name="description" content="Realm is a popular persistence solution, and I really like it a lot.Because of its ease of use, many - including me - prefer it over Core Data.However, it ha...">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="http://localhost:4000/2019/11/23/Thoughts-on-Realm.html">
+  <link rel="alternate" type="application/rss+xml" title="Ahmed Khalaf" href="http://localhost:4000/feed.xml">
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">Ahmed Khalaf</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Thoughts on Realm</h1>
+    <p class="post-meta"><time datetime="2019-11-23T13:16:00+02:00" itemprop="datePublished">Nov 23, 2019</time></p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Realm is a popular persistence solution, and I really like it a lot.
+Because of its ease of use, many - including me - prefer it over Core Data.
+However, it has some surprises and limitations.
+Here I discuss some of them.</p>
+
+<h2 id="when-laziness-backfires">When Laziness Backfires</h2>
+<p>Laziness may be the defining feature of Realm.
+Performance-wise, Realm saves a lot of execution time by following a lazy approach in retrieving data.
+That is, queries are not really evaluated unless the results are accessed.
+And data (objects and properties) are not loaded into memory unless accessed, too.
+Consider the following code (from the docs):</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="nv">dogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span> <span class="c1">// retrieves all Dogs from the default Realm</span>
+</code></pre></div></div>
+<p>That line alone basically does nothing.
+Fetching is done when we start to do something with that result; like accessing the <code class="highlighter-rouge">count</code> property, or accessing an item at index.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="nv">dogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span> <span class="c1">// retrieves all Dogs from the default Realm</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">dogs</span><span class="o">.</span><span class="n">count</span><span class="p">)</span> <span class="c1">// Here it begins to really evaluate the query.</span>
+</code></pre></div></div>
+
+<p>So, requesting <code class="highlighter-rouge">dogs.count</code> evaluates the query. But since no data is really fetched, this executes fast.</p>
+
+<p>Realm optimizes for this pattern of use. 
+Actually Realm bets on queries being simple, and data being already properly organized and indexed. Consider the following code:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="nv">tanDogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="s">"color = 'tan' AND name BEGINSWITH 'B'"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>This is a more complex query. However, it still will be fast whenever we deal with it.
+I didn’t try a similar query on a very large dataset to confirm speed, but you can figure out how
+Realm would optimize retrieving data by following a cursor-like approach, since the expected results will
+probably be enumerated (e.g. used in a loop). 
+So, it doesn’t have to scan all the data to start giving you something to work with.
+However, consider the following query:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="nv">sortedDogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="s">"color = 'tan' AND name BEGINSWITH 'B'"</span><span class="p">)</span><span class="o">.</span><span class="nf">sorted</span><span class="p">(</span><span class="nv">byKeyPath</span><span class="p">:</span> <span class="s">"name"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Here we use the same query from above except we ask Realm to fetch sorted by name.
+Depending on the size of data, we can notice a significant slow down.
+The culprit is the sorting phase. The reason is sorting requires Realm to scan the whole data in advance to
+start giving you something to work with. So, the full cost of the filtering part will be paid.</p>
+
+<p>Now we’re starting to make good sense of how Realm works in regard to data retrieval.
+The question is, how this can hurt us?</p>
+
+<p>Notice we use a synchronous API when using Realm. We don’t bother with asynchrony, callbacks, 
+threads, etc. We get data in a plain simple way.
+And since everything goes as planned, we don’t block the UI thread, and everything goes smooth…until we face such query.
+Then, problems start, as the docs don’t prepare you for such situations (remember, those are “rare” situations). For example, developers will probably start to “fix” this using classic remedies, such as
+offloading work to the background. But that only reveals other Realm limitations, like instances not being passable across threads. A very popular issue among Realm users.</p>
+
+<p>Thankfully, helpful strategies are compiled <a href="https://github.com/realm/realm-cocoa/issues/4886#issuecomment-296319210">here by JP Simard</a>. Which can summarized as:</p>
+
+<ol>
+  <li>Use the async <a href="https://realm.io/docs/swift/latest/#notifications">notification API</a>.</li>
+  <li>Keep the database and objects small.</li>
+  <li>Think carefully about how data should enter the database in first place.</li>
+</ol>
+
+<p>While all are useful advices to follow (even when not using Realm), notice how we then get far from Realm’s
+marketed simplicity. So, to utilize Realm best, don’t think of it as an object-oriented alternative to a <a href="https://en.wikipedia.org/wiki/Relational_database">RDBMS</a>. Think of it as persistence companion to viewing your data in lists. That is, save your data in a way it is as ready to be fetched as-is as possible without much querying and post-processing.</p>
+
+<h2 id="invasive-types">Invasive Types</h2>
+
+<p>Another inconvenience with Realm is that you can’t harness its performance offers unless you make 
+your code tightly coupled to its types.</p>
+
+<p>Recall that code from above:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="nv">tanDogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="s">"color = 'tan' AND name BEGINSWITH 'B'"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>We now know it will run fast as long as we don’t force Realm to do the full scan beforehand.
+We saw how could we force it by requesting a sort. However, you can force it too by converting the <code class="highlighter-rouge">Results</code> 
+object to a Swift array, as follows:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="nv">tanDogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="s">"color = 'tan' AND name BEGINSWITH 'B'"</span><span class="p">)</span><span class="o">.</span><span class="nf">map</span><span class="p">({</span> <span class="nv">$0</span> <span class="p">})</span>
+</code></pre></div></div>
+<p>So, you can see how this will affect your design, especially if you’re keen on isolating your database 
+implementation from the rest of your project.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>So, if something sounds too good to be true, it probably is.
+This is not a rant against Realm (maybe the docs 😅), it’s a brilliant solution made by brilliant engineers.
+However, we developers should deal with any tool with a grain of salt, and understand its limits before its capabilities.</p>
+
+  </div>
+
+</article>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Ahmed Khalaf</h2>
+
+    <div class="footer-col-wrapper">
+<!-- 
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>Ahmed Khalaf</li>
+          <li><a href="mailto:"></a></li>
+        </ul>
+      </div>
+ -->
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/ahmedk92"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">ahmedk92</span></a>
+
+          </li>
+          
+
+          
+          <li>
+            <a href="https://twitter.com/ahmedkhalaf_92"><span class="icon icon--twitter"><svg viewBox="0 0 16 16"><path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/></svg>
+</span><span class="username">ahmedkhalaf_92</span></a>
+
+          </li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p></p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

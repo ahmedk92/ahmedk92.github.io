@@ -1,0 +1,89 @@
+I"�!<p>Realm is a popular persistence solution, and I really like it a lot.
+Because of its ease of use, many - including me - prefer it over Core Data.
+However, it has some surprises and limitations.
+Here I discuss some of them.</p>
+
+<h2 id="when-laziness-backfires">When Laziness Backfires</h2>
+<p>Laziness may be the defining feature of Realm.
+Performance-wise, Realm saves a lot of execution time by following a lazy approach in retrieving data.
+That is, queries are not really evaluated unless the results are accessed.
+And data (objects and properties) are not loaded into memory unless accessed, too.
+Consider the following code (from the docs):</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="nv">dogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span> <span class="c1">// retrieves all Dogs from the default Realm</span>
+</code></pre></div></div>
+<p>That line alone basically does nothing.
+Fetching is done when we start to do something with that result; like accessing the <code class="highlighter-rouge">count</code> property, or accessing an item at index.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="nv">dogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span> <span class="c1">// retrieves all Dogs from the default Realm</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">dogs</span><span class="o">.</span><span class="n">count</span><span class="p">)</span> <span class="c1">// Here it begins to really evaluate the query.</span>
+</code></pre></div></div>
+
+<p>So, requesting <code class="highlighter-rouge">dogs.count</code> evaluates the query. But since no data is really fetched, this executes fast.</p>
+
+<p>Realm optimizes for this pattern of use. 
+Actually Realm bets on queries being simple, and data being already properly organized and indexed. Consider the following code:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="nv">tanDogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="s">"color = 'tan' AND name BEGINSWITH 'B'"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>This is a more complex query. However, it still will be fast whenever we deal with it.
+I didn’t try a similar query on a very large dataset to confirm speed, but you can figure out how
+Realm would optimize retrieving data by following a cursor-like approach, since the expected results will
+probably be enumerated (e.g. used in a loop). 
+So, it doesn’t have to scan all the data to start giving you something to work with.
+However, consider the following query:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="nv">sortedDogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="s">"color = 'tan' AND name BEGINSWITH 'B'"</span><span class="p">)</span><span class="o">.</span><span class="nf">sorted</span><span class="p">(</span><span class="nv">byKeyPath</span><span class="p">:</span> <span class="s">"name"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Here we use the same query from above except we ask Realm to fetch sorted by name.
+Depending on the size of data, we can notice a significant slow down.
+The culprit is the sorting phase. The reason is sorting requires Realm to scan the whole data in advance to
+start giving you something to work with. So, the full cost of the filtering part will be paid.</p>
+
+<p>Now we’re starting to make good sense of how Realm works in regard to data retrieval.
+The question is, how this can hurt us?</p>
+
+<p>Notice we use a synchronous API when using Realm. We don’t bother with asynchrony, callbacks, 
+threads, etc. We get data in a plain simple way.
+And since everything goes as planned, we don’t block the UI thread, and everything goes smooth…until we face such query.
+Then, problems start, as the docs don’t prepare you for such situations (remember, those are “rare” situations). For example, developers will probably start to “fix” this using classic remedies, such as
+offloading work to the background. But that only reveals other Realm limitations, like instances not being passable across threads. A very popular issue among Realm users.</p>
+
+<p>Thankfully, helpful strategies are compiled <a href="https://github.com/realm/realm-cocoa/issues/4886#issuecomment-296319210">here by JP Simard</a>. Which can summarized as:</p>
+
+<ol>
+  <li>Use the async <a href="https://realm.io/docs/swift/latest/#notifications">notification API</a>.</li>
+  <li>Keep the database and objects small.</li>
+  <li>Think carefully about how data should enter the database in first place.</li>
+</ol>
+
+<p>While all are useful advices to follow (even when not using Realm), notice how we then get far from Realm’s
+marketed simplicity. So, to utilize Realm best, don’t think of it as an object-oriented alternative to a <a href="https://en.wikipedia.org/wiki/Relational_database">RDBMS</a>. Think of it as persistence companion to viewing your data in lists. That is, save your data in a way it is as ready to be fetched as-is as possible without much querying and post-processing.</p>
+
+<h2 id="invasive-types">Invasive Types</h2>
+
+<p>Another inconvenience with Realm is that you can’t harness its performance offers unless you make 
+your code tightly coupled to its types.</p>
+
+<p>Recall that code from above:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="nv">tanDogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="s">"color = 'tan' AND name BEGINSWITH 'B'"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>We now know it will run fast as long as we don’t force Realm to do the full scan beforehand.
+We saw how could we force it by requesting a sort. However, you can force it too by converting the <code class="highlighter-rouge">Results</code> 
+object to a Swift array, as follows:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="nv">tanDogs</span> <span class="o">=</span> <span class="n">realm</span><span class="o">.</span><span class="nf">objects</span><span class="p">(</span><span class="kt">Dog</span><span class="o">.</span><span class="k">self</span><span class="p">)</span><span class="o">.</span><span class="nf">filter</span><span class="p">(</span><span class="s">"color = 'tan' AND name BEGINSWITH 'B'"</span><span class="p">)</span><span class="o">.</span><span class="nf">map</span><span class="p">({</span> <span class="nv">$0</span> <span class="p">})</span>
+</code></pre></div></div>
+<p>So, you can see how this will affect your design, especially if you’re keen on isolating your database 
+implementation from the rest of your project.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>So, if something sounds too good to be true, it probably is.
+This is not a rant against Realm (maybe the docs 😅), it’s a brilliant solution made by brilliant engineers.
+However, we developers should deal with any tool with a grain of salt, and understand its limits before its capabilities.</p>
+:ET

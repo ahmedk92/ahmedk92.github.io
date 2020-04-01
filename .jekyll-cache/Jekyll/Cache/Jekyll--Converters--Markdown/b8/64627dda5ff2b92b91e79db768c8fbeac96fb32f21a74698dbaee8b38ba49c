@@ -1,0 +1,5 @@
+I"<p>It’s not uncommon for the back-end guys to return some JSON where the type of a field is <em>either</em> a number or a string.
+This causes inconvenience at the app development level where it’s not enough to declare vanilla <code class="highlighter-rouge">Codable</code> structs.
+Thankfully, <code class="highlighter-rouge">Decodable</code> makes this way less messy than first imagined.
+We can wrap the <em>either</em> logic in a separate <code class="highlighter-rouge">Decodable</code> type that handles this for us:</p>
+:ET

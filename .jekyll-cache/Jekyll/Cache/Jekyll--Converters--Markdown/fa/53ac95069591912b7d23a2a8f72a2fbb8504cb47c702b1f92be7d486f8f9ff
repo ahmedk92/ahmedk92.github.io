@@ -1,0 +1,20 @@
+I"�	<p>So, I was using this beautiful Quran app <a href="https://itunes.apple.com/app/apple-store/id706037876?mt=8">Ayah</a>. I noticed something cool about how it pages its content; there is a visual divider between each two inner pages, and a different one between outer pages. See the below gif for clarity.</p>
+
+<p><img src="http://localhost:4000/assets/ayah1.gif" alt="Overflowing Pagination" /></p>
+
+<h2 id="preliminary-analysis">Preliminary Analysis</h2>
+
+<p>You may see such effect being called <strong>“Overflowing Pagination”</strong>. This is not uncommon, and there is good write-ups on how it can be achieved; for example: Soroush’s articles <a href="http://khanlou.com/2013/04/changing-the-size-of-a-paging-scroll-view/">1</a> &amp; <a href="http://khanlou.com/2013/04/paging-a-overflowing-collection-view/">2</a>. Also allow me to plug in an <a href="/2019/01/19/Experimenting-With-targetContentOffset-Part-1-Uneven-Pagination.html">earlier experimentation of mine</a> 😁.</p>
+
+<h2 id="buti-overthought-the-problem-as-usual">But…I overthought the problem. As usual.</h2>
+
+<p>Techniques mentioned above deal with a trickier problem; paging with a page size different than the scrollView’s bounds width (the default behavior you get with <code class="highlighter-rouge">isPagingEnabled</code>). Luckily, to achieve what we saw in the video, we don’t need any of this.</p>
+
+<p>If you notice, you’ll see that although there are two different looking separator views, they are of the same size. So, this gives us an idea. Instead of having the width of the scroll view being equal to our screen, we increase it by how big we want our separator views to be (with the extra width being evenly distributed over both sides). Moreover, we center the scroll view in which the extra portions are off-screen. And that’s it. Here’s a <a href="https://github.com/ahmedk92/SpacedPageViewController">sample code</a>, and a demo of it below.</p>
+
+<p><img src="http://localhost:4000/assets/overflowing.gif" alt="Overflowing Pagination" /></p>
+
+<p>And as you may already know, as this applies to <code class="highlighter-rouge">UIScrollView</code>, then it applies to <code class="highlighter-rouge">UIPageViewController</code> (as in the linked sample) and <code class="highlighter-rouge">UICollectionView</code> with <code class="highlighter-rouge">isPagingEnabled</code>.</p>
+
+<p>Thanks. Looking forward for your feedback.</p>
+:ET

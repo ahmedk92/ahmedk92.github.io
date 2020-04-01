@@ -4,7 +4,7 @@ title:  "Augmenting MOLH"
 date:   2020-04-01 10:34:00 +0200
 ---
 
-[MOLH](https://github.com/MoathOthman/MOLH/) is a popular library among developers whose audience are of Arabic background. It's common for Arabic apps to support multiple languages, and also **support changing between them without restarting**. I wrote [here]({{ site.baseurl }}{% post_url 2017-12-15-Acheiving Dynamic Localisation in iOSPagination %}) how iOS doesn't support that out-of-the-box and what were the possible workarounds back-then (this was a write-up for a solution I reached before MOLH was made public).
+[MOLH](https://github.com/MoathOthman/MOLH/) is a popular library among developers whose audience are of Arabic background. It's common for Arabic apps to support multiple languages, and also **support changing between them without restarting**. I wrote [here]({{ site.baseurl }}{% post_url 2017-12-15-Acheiving Dynamic Localisation in iOS %}) how iOS doesn't support that out-of-the-box and what were the possible workarounds back-then (this was a write-up for a solution I reached before MOLH was made public).
 In this article I'll try to briefly reiterate how MOLH works to reach to its limitation, and then try to find some solutions/workarounds.
 
 Before we start, these limitations are not specific to MOLH; it's rather general to any approach that tries to work around iOS's limitation to change the app's language without restarting.

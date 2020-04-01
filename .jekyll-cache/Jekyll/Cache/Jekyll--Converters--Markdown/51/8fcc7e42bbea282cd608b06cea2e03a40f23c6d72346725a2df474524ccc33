@@ -1,0 +1,59 @@
+I"�<p><a href="https://github.com/MoathOthman/MOLH/">MOLH</a> is a popular library among developers whose audience are of Arabic background. It’s common for Arabic apps to support multiple languages, and also <strong>support changing between them without restarting</strong>. I wrote <a href="/2017/12/15/Acheiving-Dynamic-Localisation-in-iOS.html">here</a> how iOS doesn’t support that out-of-the-box and what were the possible workarounds back-then (this was a write-up for a solution I reached before MOLH was made public).
+In this article I’ll try to briefly reiterate how MOLH works to reach to its limitation, and then try to find some solutions/workarounds.</p>
+
+<p>Before we start, these limitations are not specific to MOLH; it’s rather general to any approach that tries to work around iOS’s limitation to change the app’s language without restarting.</p>
+
+<h2 id="how-molh-works">How MOLH works</h2>
+
+<p>(Feel free to skip this section if you already know how MOLH works)</p>
+
+<p>Two aspects of an app reflects to the user that it respects the desired localization: the language of the texts, and the direction of how the flow of the views (left-to-right or right-to-left).
+As you may already know, the default behavior of iOS is to pick and suitable language at startup (of the app) and upon that it picks the relevant strings from string files in that language’s <code class="highlighter-rouge">lproj</code> folder, as well as applying the corresponding language direction, <strong>and sticks to that</strong>.</p>
+
+<p>Two goals here:</p>
+<ol>
+  <li>Guiding <code class="highlighter-rouge">NSLocalizedString</code> to search the new language folder (i..e <code class="highlighter-rouge">ar.lproj</code>, <code class="highlighter-rouge">en.lproj</code>, …etc)</li>
+  <li>Forcing new views to flip (or not) with respect to the new language.</li>
+</ol>
+
+<h3 id="1-nslocalizedstring">(1) NSLocalizedString</h3>
+<p><code class="highlighter-rouge">NSLocalizedString</code> delegates to <code class="highlighter-rouge">NSBundle.mainBundle</code> for getting the suitable localized string value.
+Upon app startup, <code class="highlighter-rouge">NSBundle.mainBundle</code> makes up its mind <strong>once and for all</strong> on what language folder it’s going to search till the next run. To overcome this limitation, MOLH <a href="https://github.com/MoathOthman/MOLH/blob/313691443043f0da83502040f39b852cd9e3e0e8/Sources/MOLH/MOLH.swift#L184">swizzles the main bundle</a> and dynamically loads the relevant bundle to search for the required string.</p>
+
+<h3 id="2-flipping-views">(2) Flipping views</h3>
+<p>This is somewhat easier. <code class="highlighter-rouge">UIView</code> formally supports forcing the language direction independently of the actual app language. This is done via setting the <a href="https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute"><code class="highlighter-rouge">semanticContentAttribute</code></a> to the desired value.
+MOLH does this for all newly created views by <a href="https://github.com/MoathOthman/MOLH/blob/313691443043f0da83502040f39b852cd9e3e0e8/Sources/MOLH/MOLH.swift#L133">using the appearance proxy to set the suitable <code class="highlighter-rouge">semanticContentAttribute</code></a>. This is why it needs the app to virtually “restart” (i.e. start over from the root view controller, re-creating all views).</p>
+
+<h2 id="what-molh-doesnt-solve-and-it-doesnt-have-to">What MOLH doesn’t solve (and it doesn’t have to)</h2>
+
+<h3 id="formatters">Formatters</h3>
+<p>There are some classes that must pick some locale information to correctly present its data. Such classes include formatters (e.g. <code class="highlighter-rouge">NumberFormmatter</code> and <code class="highlighter-rouge">DateFormatter</code>). If we don’t explicitly set the <code class="highlighter-rouge">locale</code> property of such formatters to the desired language, it will pick the actual app language, causing a date to be displayed in the wrong language for example.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="nv">dateFormatter</span> <span class="o">=</span> <span class="kt">DateFormatter</span><span class="p">()</span>
+<span class="n">dateFormatter</span><span class="o">.</span><span class="n">locale</span> <span class="o">=</span> <span class="kt">Locale</span><span class="p">(</span><span class="nv">identifier</span><span class="p">:</span> <span class="s">"ar"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="nstextalignmentjustified">NSTextAlignmentJustified</h3>
+<p>Formatters are easy to handle as we saw. However, justified <code class="highlighter-rouge">UILabel</code> and <code class="highlighter-rouge">UITextView</code> yield unwanted results. This is because justifying works by distributing space in every line of text so that each line starts and ends at the same start and end points respectively, <strong>and aligning the remaining last line either left or right if it’s not wide enough</strong>. As you you may already guessed, left or right alignment is picked according to the actual app language.</p>
+
+<p><img src="http://localhost:4000/assets/incorrectjustify.png" alt="Incorrect Justify Last Line" /></p>
+
+<p>Unlike formatters, there seems to be no explicit way to guide <code class="highlighter-rouge">UILabel</code> nor <code class="highlighter-rouge">UITextView</code> on how to force that alignment. However, there’s a way to achieve the desired justifying with <code class="highlighter-rouge">NSAttributedString</code>.
+<code class="highlighter-rouge">NSAttributedString</code> (a world of its own) accepts an attribute called <code class="highlighter-rouge">paragraphStyle</code>. 
+What matters to us from it is the <a href="https://developer.apple.com/documentation/uikit/nsmutableparagraphstyle/1534601-basewritingdirection?language=objc"><code class="highlighter-rouge">baseWritingDirection</code></a> property. We can set it to either to <code class="highlighter-rouge">NSWritingDirectionLeftToRight</code> or <code class="highlighter-rouge">NSWritingDirectionRightToLeft</code>. This affects decisions that rely on such information, namely justifying and natural alignment. Sample code:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="nv">attributedString</span> <span class="o">=</span> <span class="kt">NSAttributedString</span><span class="p">(</span><span class="nv">string</span><span class="p">:</span> <span class="n">string</span><span class="p">,</span> <span class="nv">attributes</span><span class="p">:</span> <span class="p">[</span>
+    <span class="o">.</span><span class="nv">paragraphStyle</span><span class="p">:</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="nv">style</span> <span class="o">=</span> <span class="kt">NSMutableParagraphStyle</span><span class="p">()</span>
+        <span class="n">style</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="o">.</span><span class="n">justified</span>
+        <span class="n">style</span><span class="o">.</span><span class="n">baseWritingDirection</span> <span class="o">=</span> <span class="o">.</span><span class="n">rightToLeft</span>
+        <span class="k">return</span> <span class="n">style</span>
+    <span class="p">}()</span>
+<span class="p">])</span>
+</code></pre></div></div>
+
+<h2 id="demo">Demo</h2>
+<p>I made a demo of these problems (without the solutions). You can check it <a href="https://github.com/ahmedk92/FormatterDefaults">here</a>. Make sure to read the usage notes before inspecting.</p>
+
+<p>Thanks for reading! Corrections and suggestions are welcome.</p>
+:ET
