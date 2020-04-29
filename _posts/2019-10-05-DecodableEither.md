@@ -177,3 +177,36 @@ extension Int: Convertible {
     typealias T = String
 }
 ```
+
+## Update (29-04-2020)
+[Fadi](https://twitter.com/botros__fadi) suggested a more generic solution to this problem that leaves the converting step to the user.
+I like it. Here it is:
+
+```swift
+enum DecodableEither<T1: Decodable, T2: Decodable>: Decodable {
+    case v1(T1)
+    case v2(T2)
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let v1 = try? container.decode(T1.self) {
+            self = .v1(v1)
+        } else {
+            self = try .v2(container.decode(T2.self))
+        }
+    }
+    
+    var v1: T1? {
+        switch self {
+        case .v1(let value): return value
+        default: return nil
+        }
+    }
+    var v2: T2? {
+        switch self {
+        case .v2(let value): return value
+        default: return nil
+        }
+    }
+}
+```
