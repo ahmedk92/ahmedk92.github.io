@@ -5,8 +5,8 @@
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Sun, 24 May 2020 01:01:58 +0200</pubDate>
-    <lastBuildDate>Sun, 24 May 2020 01:01:58 +0200</lastBuildDate>
+    <pubDate>Sun, 24 May 2020 01:02:31 +0200</pubDate>
+    <lastBuildDate>Sun, 24 May 2020 01:02:31 +0200</lastBuildDate>
     <generator>Jekyll v4.0.0</generator>
     
       <item>
@@ -37,7 +37,7 @@ For digital displays (computer monitors, mobile phones, etc..) sampling natural 
 &lt;ol&gt;
   &lt;li&gt;Our single frame shouldn’t take more time than 1/60 of a second to be made.&lt;/li&gt;
   &lt;li&gt;Even if we generate each frame under 1/60s, we still need to synchronize with the system’s refresh rate. That is, when does the system request our frame to be delivered.
-This is because even if our frame is generated under 1/60s, beginning frame generation just at the end of the expected frame duration will probably exceed the duration requiring, causing the system to drop that frame entirely and come for the next frame instead. If this happens enough, we’ll again lose smoothness even that our drawing is fast. However, this is actually improbable with UIKit, as &lt;code class=&quot;highlighter-rouge&quot;&gt;setNeedsDisplay()&lt;/code&gt; just marks the view to be re-drawn the next drawing cycle and not immediately.&lt;/li&gt;
+This is because even if our frame is generated under 1/60s, beginning frame generation just at the end of the expected frame duration will probably exceed the duration required, causing the system to drop that frame entirely and come for the next frame instead. If this happens enough, we’ll again lose smoothness even that our drawing is fast. However, this is actually improbable with UIKit, as &lt;code class=&quot;highlighter-rouge&quot;&gt;setNeedsDisplay()&lt;/code&gt; just marks the view to be re-drawn the next drawing cycle and not immediately.&lt;/li&gt;
 &lt;/ol&gt;
 
 &lt;h2 id=&quot;enter-cadisplaylink&quot;&gt;Enter CADisplayLink&lt;/h2&gt;
