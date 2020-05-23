@@ -12,7 +12,7 @@ ___
 If you want to do custom drawing; that is, the kind of drawing that cannot be simply achieved by composing existing UIKit classes (e.g. UILabel, UIImageView, etc...), there are two main approaches to do that. Namely, there is the Core Graphics way, and the Core Animation way.
 
 If you tried to play with these before, you may have noticed that animating with Core Animation is easier (it's in the name as you see). This is because you build your custom view using `CALayer` subclasses (`CAShapeLayer`, `CAGradientLayer`, etc..) that have animatable properties by default.
-So, it's matter of utiliziing the rich animation APIs Core Animation provides like `CABasicAnimation` and `CAKeyframeAnimation`.
+So, it's matter of utilizing the rich animation APIs Core Animation provides like `CABasicAnimation` and `CAKeyframeAnimation`.
 
 However, it's not the case with the Core Graphics way. 
 Just as you override `draw(_:)`, you'll draw how will your view look in a single frame, depending on what data your view has. There is no high-level component of your drawing that you can communicate with to change its state. All your drawing can be thought of (and essentially is) a single bitmap (think: like a png image).
