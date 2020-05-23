@@ -22,7 +22,7 @@ Perfect, now, how to animate such changes?
 
 We have to have at least a basic understanding of how a basic animation is done.
 
-What we consider as a smooth animation can be thought of a series of frames that gradually completes a story. Each frame shouldn't provide so much change; or else we would lose the smoothness (called jankiness, jittery, jumpiness, stutter, etc..). These frames also should arrive quickly one after the other for the same purpose.
+What we consider a smooth animation can be thought of a series of frames that gradually completes a story. Each frame shouldn't provide so much change; or else we would lose the smoothness (called jankiness, jittery, jumpiness, stutter, etc..). These frames also should arrive quickly one after the other for the same purpose.
 For digital displays (computer monitors, mobile phones, etc..) sampling natural motion at a rate of 60 frames per second is considered ideal. We can drop to the 30s for acceptable results. We can go up to 120 too for luxury (as in the latest iPads). However, for most app uses-cases we deal with on a daily basis, 60 frames-per-second is our target.
 
 Out of this theory, we can come up with two requirements:
