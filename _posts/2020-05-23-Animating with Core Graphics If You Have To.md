@@ -30,7 +30,7 @@ Out of this theory, we can come up with two requirements:
 
 1. Our single frame shouldn't take more time than 1/60 of a second to be made.
 2. Even if we generate each frame under 1/60s, we still need to synchronize with the system's refresh rate. That is, when does the system request our frame to be delivered.
-This because even if our frame is generated under 1/60s, beginning frame generation just at the end of the expected frame duration will probably exceed the duration requiring, causing the system to drop that frame entirely and come for the next frame instead. If this happens enough, we'll again lose smoothness even that our drawing is fast.
+This because even if our frame is generated under 1/60s, beginning frame generation just at the end of the expected frame duration will probably exceed the duration requiring, causing the system to drop that frame entirely and come for the next frame instead. If this happens enough, we'll again lose smoothness even that our drawing is fast. However, this is actually improbable with UIKit, as `setNeedsDisplay()` just marks the view to be re-drawn the next drawing cycle and not immediately.
 
 ## Enter CADisplayLink
 
