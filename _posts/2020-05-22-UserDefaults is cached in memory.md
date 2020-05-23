@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "UserDefaults is cached in memory"
+title:  "UserDefaults Is Cached in Memory"
 date:   2020-05-22 22:57:00 +0200
 ---
 
