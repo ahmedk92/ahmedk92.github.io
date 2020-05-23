@@ -23,13 +23,13 @@ Perfect, now, how to animate such changes?
 We have to have at least a basic understanding of how a basic animation is done.
 
 What we consider a smooth animation can be thought of a series of frames that gradually completes a story. Each frame shouldn't provide so much change; or else we would lose the smoothness (called jankiness, jittery, jumpiness, stutter, etc..). These frames also should arrive quickly one after the other for the same purpose.
-For digital displays (computer monitors, mobile phones, etc..) sampling natural motion at a rate of 60 frames per second is considered ideal. We can drop to the 30s for acceptable results. We can go up to 120 too for luxury (as in the latest iPads). However, for most app uses-cases we deal with on a daily basis, 60 frames-per-second is our target.
+For digital displays (computer monitors, mobile phones, etc..) sampling natural motion at a rate of 60 frames per second is considered ideal. We can drop to the 30s and still maintain acceptable results. We can go up to 120 too for luxury (as in the latest iPads). However, for most app uses-cases we deal with on a daily basis, 60 frames-per-second is our target.
 
 Out of this theory, we can come up with two requirements:
 
 1. Our single frame shouldn't take more time than 1/60 of a second to be made.
 2. Even if we generate each frame under 1/60s, we still need to synchronize with the system's refresh rate. That is, when does the system request our frame to be delivered.
-This because even if our frame is generated under 1/60s, beginning frame generation just at the end of the expected frame duration will probably exceed the duration requiring, causing the system to drop that frame entirely and come for the next frame instead. If this happens enough, we'll again lose smoothness even that our drawing is fast. However, this is actually improbable with UIKit, as `setNeedsDisplay()` just marks the view to be re-drawn the next drawing cycle and not immediately.
+This is because even if our frame is generated under 1/60s, beginning frame generation just at the end of the expected frame duration will probably exceed the duration requiring, causing the system to drop that frame entirely and come for the next frame instead. If this happens enough, we'll again lose smoothness even that our drawing is fast. However, this is actually improbable with UIKit, as `setNeedsDisplay()` just marks the view to be re-drawn the next drawing cycle and not immediately.
 
 ## Enter CADisplayLink
 
