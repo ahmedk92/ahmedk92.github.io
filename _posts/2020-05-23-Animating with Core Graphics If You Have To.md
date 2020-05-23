@@ -50,7 +50,7 @@ This depends on your goal, but let's have a simple example.
 Assume we want to uniformly animate the stroke of a ring-like shape over 3 seconds.
 So, let's have some idealistic assumptions, and do simple maths:
 
-1. Assume the refresh rate along those whole 3 seconds is 60 FPS.
+1. Assume the refresh rate along those whole 3 seconds is constantly 60 FPS each.
 2. Assume all frames have equal durations.
 
 Now, since we agree that each second should have 60 frames, then our 3-second animation should have 3x60 frames = 180 frames.
@@ -87,4 +87,4 @@ let displayLink = CADisplayLink(target: target, selector: #selector(update))
 [Full code](https://github.com/ahmedk92/AnimationTechniques).
 
 ## Conclusion
-As you saw, you're better off going the Core Animation way if you have animation in mind. Also notice that your maths can get rapidly more complex if the animation is not linear/uniform as in our example. That is, if you want ease-in or ease-out, you'll have to figure how much frames at the start and the end of the animation will have different changes than the rest of the frames, and so on for different paces, which is easier with Core Animation with [timing functions](https://developer.apple.com/documentation/quartzcore/camediatimingfunction).
+As you saw, you're better off going the Core Animation way if you have animation in mind. Also notice that your maths can get rapidly more complex if the animation is not linear/uniform as in our example. That is, if you want to ease-in or ease-out, you'll have to figure how much frames at the start and the end of the animation will have different changes than the rest of the frames, and so on for different paces, which is easier with Core Animation with [timing functions](https://developer.apple.com/documentation/quartzcore/camediatimingfunction).

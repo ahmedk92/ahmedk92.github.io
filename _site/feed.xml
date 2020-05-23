@@ -5,8 +5,8 @@
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Sun, 24 May 2020 01:03:36 +0200</pubDate>
-    <lastBuildDate>Sun, 24 May 2020 01:03:36 +0200</lastBuildDate>
+    <pubDate>Sun, 24 May 2020 01:08:02 +0200</pubDate>
+    <lastBuildDate>Sun, 24 May 2020 01:08:02 +0200</lastBuildDate>
     <generator>Jekyll v4.0.0</generator>
     
       <item>
@@ -61,7 +61,7 @@ Assume we want to uniformly animate the stroke of a ring-like shape over 3 secon
 So, let’s have some idealistic assumptions, and do simple maths:&lt;/p&gt;
 
 &lt;ol&gt;
-  &lt;li&gt;Assume the refresh rate along those whole 3 seconds is 60 FPS.&lt;/li&gt;
+  &lt;li&gt;Assume the refresh rate along those whole 3 seconds is constantly 60 FPS each.&lt;/li&gt;
   &lt;li&gt;Assume all frames have equal durations.&lt;/li&gt;
 &lt;/ol&gt;
 
@@ -97,7 +97,7 @@ current_value += delta
 &lt;p&gt;&lt;a href=&quot;https://github.com/ahmedk92/AnimationTechniques&quot;&gt;Full code&lt;/a&gt;.&lt;/p&gt;
 
 &lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;As you saw, you’re better off going the Core Animation way if you have animation in mind. Also notice that your maths can get rapidly more complex if the animation is not linear/uniform as in our example. That is, if you want ease-in or ease-out, you’ll have to figure how much frames at the start and the end of the animation will have different changes than the rest of the frames, and so on for different paces, which is easier with Core Animation with &lt;a href=&quot;https://developer.apple.com/documentation/quartzcore/camediatimingfunction&quot;&gt;timing functions&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;As you saw, you’re better off going the Core Animation way if you have animation in mind. Also notice that your maths can get rapidly more complex if the animation is not linear/uniform as in our example. That is, if you want to ease-in or ease-out, you’ll have to figure how much frames at the start and the end of the animation will have different changes than the rest of the frames, and so on for different paces, which is easier with Core Animation with &lt;a href=&quot;https://developer.apple.com/documentation/quartzcore/camediatimingfunction&quot;&gt;timing functions&lt;/a&gt;.&lt;/p&gt;
 </description>
         <pubDate>Sat, 23 May 2020 12:29:00 +0200</pubDate>
         <link>http://localhost:4000/2020/05/23/Animating-With-Core-Graphics-If-You-Have-To.html</link>
