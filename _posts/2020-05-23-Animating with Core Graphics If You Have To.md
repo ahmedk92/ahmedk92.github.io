@@ -86,3 +86,6 @@ let displayLink = CADisplayLink(target: target, selector: #selector(update))
 ```
 
 [Full code](https://github.com/ahmedk92/AnimationTechniques).
+
+## Conclusion
+As you saw, you're better off going the Core Animation way if you have animation in mind. Also notice that your maths can get rapidly more complex if the animation is not linear/uniform as in our example. That is, if you want ease-in or ease-out, you'll have to figure how much frames at the start and the end of the animation will have different changes than the rest of the frames, and so on for different paces, which is easier with Core Animation with [timing functions](https://developer.apple.com/documentation/quartzcore/camediatimingfunction).
