@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Animating with Core Graphics If You Have To"
+title:  "Animating With Core Graphics If You Have To"
 date:   2020-05-23 12:29:00 +0200
 ---
 

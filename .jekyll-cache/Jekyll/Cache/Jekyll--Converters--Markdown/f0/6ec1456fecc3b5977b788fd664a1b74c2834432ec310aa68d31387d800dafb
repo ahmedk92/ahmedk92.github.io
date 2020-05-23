@@ -1,0 +1,33 @@
+I"�
+<p><code class="highlighter-rouge">UserDefaults</code> caches its contents in memory, and loads it on application startup even if it’s not used. This is vaguely documented.
+From the <a href="https://developer.apple.com/documentation/foundation/userdefaultss">docs</a>:</p>
+
+<blockquote>
+  <p>UserDefaults caches the information to avoid having to open the user’s defaults database each time you need a default value.</p>
+</blockquote>
+
+<p>Let’s do an experiment to confirm that.</p>
+
+<p>Let’s make a very simple app based on the single view app template. 
+Before doing anything, let’s record how much memory does our app consumes before any <code class="highlighter-rouge">UserDefaults</code>-related work.</p>
+
+<p>On the iPhone SE 2 simulator: 8.7 MB.</p>
+
+<p>Good. Let’s save 100 MB of data to <code class="highlighter-rouge">UserDefaults</code> and see what we get.</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">func</span> <span class="nf">application</span><span class="p">(</span><span class="n">_</span> <span class="nv">application</span><span class="p">:</span> <span class="kt">UIApplication</span><span class="p">,</span> <span class="n">didFinishLaunchingWithOptions</span> <span class="nv">launchOptions</span><span class="p">:</span> <span class="p">[</span><span class="kt">UIApplication</span><span class="o">.</span><span class="kt">LaunchOptionsKey</span><span class="p">:</span> <span class="kt">Any</span><span class="p">]?)</span> <span class="o">-&gt;</span> <span class="kt">Bool</span> <span class="p">{</span>
+    <span class="kt">UserDefaults</span><span class="o">.</span><span class="n">standard</span><span class="o">.</span><span class="nf">set</span><span class="p">(</span><span class="kt">Data</span><span class="p">(</span><span class="nv">repeating</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nv">count</span><span class="p">:</span> <span class="mi">100_000_000</span><span class="p">),</span> <span class="nv">forKey</span><span class="p">:</span> <span class="s">"data"</span><span class="p">)</span>    
+    <span class="k">return</span> <span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>After running that I got: 104 MB.</p>
+
+<p>OK, let’s run again removing that code; essentially like our very first run, and see if anything changes.</p>
+
+<p>Now we got: 104 MB.</p>
+
+<p>So, even if we no longer save or read from <code class="highlighter-rouge">UserDefaults</code>, just having that data there makes our app consumes what that data worth in memory.</p>
+
+<p><a href="https://github.com/ahmedk92/UserDefaultsCaching">Code for the experiment</a>.</p>
+:ET

@@ -1,0 +1,3 @@
+I"<p><code class="highlighter-rouge">UserDefaults</code> caches its contents in memory, and loads it on application startup even if it’s not used. This is vaguely documented.
+From the <a href="https://developer.apple.com/documentation/foundation/userdefaultss">docs</a>:</p>
+:ET

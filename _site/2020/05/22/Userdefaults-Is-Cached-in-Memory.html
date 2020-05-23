@@ -6,11 +6,11 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>WKWebView Horizontal Paging</title>
-  <meta name="description" content="UIWebView had a helpful property named paginationMode. It gave you horizontal pagination out of the box; specifically using the values: leftToRight, and righ...">
+  <title>Userdefaults Is Cached in Memory</title>
+  <meta name="description" content="UserDefaults caches its contents in memory, and loads it on application startup even if it’s not used. This is vaguely documented.From the docs:">
 
   <link rel="stylesheet" href="/css/main.css">
-  <link rel="canonical" href="http://localhost:4000/2017/11/03/WKWebView-Horizontal-Paging.html">
+  <link rel="canonical" href="http://localhost:4000/2020/05/22/Userdefaults-Is-Cached-in-Memory.html">
   <link rel="alternate" type="application/rss+xml" title="Blog" href="http://localhost:4000/feed.xml">
 </head>
 
@@ -57,37 +57,42 @@
         <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
-    <h1 class="post-title" itemprop="name headline">WKWebView Horizontal Paging</h1>
-    <p class="post-meta"><time datetime="2017-11-03T15:23:00+02:00" itemprop="datePublished">Nov 3, 2017</time></p>
+    <h1 class="post-title" itemprop="name headline">Userdefaults Is Cached in Memory</h1>
+    <p class="post-meta"><time datetime="2020-05-22T22:57:00+02:00" itemprop="datePublished">May 22, 2020</time></p>
   </header>
 
   <div class="post-content" itemprop="articleBody">
-    <p><code class="highlighter-rouge">UIWebView</code> had a helpful property named <code class="highlighter-rouge">paginationMode</code>. It gave you horizontal pagination out of the box; specifically using the values: <code class="highlighter-rouge">leftToRight</code>, and <code class="highlighter-rouge">rightToLeft</code>. However, <code class="highlighter-rouge">UIWebView</code> is going out of favor, and since iOS 8, Apple officially encourages using <code class="highlighter-rouge">WKWebView</code>. Unfortunately, <code class="highlighter-rouge">WKWebView</code> doesn’t have that property nor its equivalent out of the box.</p>
+    <p><code class="highlighter-rouge">UserDefaults</code> caches its contents in memory, and loads it on application startup even if it’s not used. This is vaguely documented.
+From the <a href="https://developer.apple.com/documentation/foundation/userdefaultss">docs</a>:</p>
 
-<p>Thankfully, horizontal pagination (left and right) is doable using CSS. CSS has a helpful property called <code class="highlighter-rouge">column-width</code>. Using that results in segmenting the html body into columns of the specified width. So, the idea is as follows:</p>
-<ol>
-  <li>Set the <code class="highlighter-rouge">column-width</code> property of the body to the webview’s width.</li>
-  <li>Set the <code class="highlighter-rouge">height</code> property of the body to the webview’s height.</li>
-  <li>Set <code class="highlighter-rouge">isPagingEnabled</code> of the webview’s <code class="highlighter-rouge">scrollView</code> to true.</li>
-</ol>
+<blockquote>
+  <p>UserDefaults caches the information to avoid having to open the user’s defaults database each time you need a default value.</p>
+</blockquote>
 
-<p>That’s it (for left to right content though). It’s up to you where to set the above values. For example, you can do it in <code class="highlighter-rouge">webView(_:didFinish:)</code> of the webview’s <code class="highlighter-rouge">navigationDelegate</code>.</p>
+<p>Let’s do an experiment to confirm that.</p>
 
-<h3 id="now-rtl-support">Now, RTL support.</h3>
+<p>Let’s make a very simple app based on the single view app template. 
+Before doing anything, let’s record how much memory does our app consumes before any <code class="highlighter-rouge">UserDefaults</code>-related work.</p>
 
-<p>It’s as simple as setting the <code class="highlighter-rouge">direction</code> style property of the html tag to <code class="highlighter-rouge">rtl</code>. But if that somehow badly affects your page, then you have to get more creative. One crazy solution is as follows:</p>
-<ol>
-  <li>Wrap all the contents of the <code class="highlighter-rouge">&lt;body&gt;</code> tag in one container <code class="highlighter-rouge">div</code>.</li>
-  <li>Set the <code class="highlighter-rouge">-webkit-transform</code> property of that div to <code class="highlighter-rouge">scale(-1, 1)</code>. (i.e. this results in horizontal mirroring)</li>
-  <li>Similarily, mirror the webview itself. (i.e. <code class="highlighter-rouge">webview.transform = CGAffeineTransform(scaledX: -1, y: 1)</code>)</li>
-</ol>
+<p>On the iPhone SE 2 simulator: 8.7 MB.</p>
 
-<h3 id="credits">Credits:</h3>
-<p>Thanks to my friend and colleague <a href="https://www.linkedin.com/in/sayed-arfa/">Sayed Arfa</a> for suggesting <code class="highlighter-rouge">column-width</code> and overall inspiration.</p>
+<p>Good. Let’s save 100 MB of data to <code class="highlighter-rouge">UserDefaults</code> and see what we get.</p>
 
-<h1 id="update">Update</h1>
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">func</span> <span class="nf">application</span><span class="p">(</span><span class="n">_</span> <span class="nv">application</span><span class="p">:</span> <span class="kt">UIApplication</span><span class="p">,</span> <span class="n">didFinishLaunchingWithOptions</span> <span class="nv">launchOptions</span><span class="p">:</span> <span class="p">[</span><span class="kt">UIApplication</span><span class="o">.</span><span class="kt">LaunchOptionsKey</span><span class="p">:</span> <span class="kt">Any</span><span class="p">]?)</span> <span class="o">-&gt;</span> <span class="kt">Bool</span> <span class="p">{</span>
+    <span class="kt">UserDefaults</span><span class="o">.</span><span class="n">standard</span><span class="o">.</span><span class="nf">set</span><span class="p">(</span><span class="kt">Data</span><span class="p">(</span><span class="nv">repeating</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nv">count</span><span class="p">:</span> <span class="mi">100_000_000</span><span class="p">),</span> <span class="nv">forKey</span><span class="p">:</span> <span class="s">"data"</span><span class="p">)</span>    
+    <span class="k">return</span> <span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></div></div>
 
-<p>At the time of writing this post, I somehow missed this <a href="https://github.com/readium/architecture/issues/10">thread</a>. They suggested to use the undocumented(?) CSS property value <code class="highlighter-rouge">overflow:-webkit-paged-x</code>. This is more convenient than what’s explained above as it doesn’t need us to compute a width nor do additional work for RTL handling. However, it doesn’t seem reliable, as the chromium project seems to <a href="https://www.chromestatus.com/feature/5731653806718976">plan to remove it</a>.</p>
+<p>After running that I got: 104 MB.</p>
+
+<p>OK, let’s run again removing that code; essentially like our very first run, and see if anything changes.</p>
+
+<p>Now we got: 104 MB.</p>
+
+<p>So, even if we no longer save or read from <code class="highlighter-rouge">UserDefaults</code>, just having that data there makes our app consumes what that data worth in memory.</p>
+
+<p><a href="https://github.com/ahmedk92/UserDefaultsCaching">Code for the experiment</a>.</p>
 
   </div>
 

@@ -1,0 +1,88 @@
+I"� <p>Skip directly to the <a href="https://github.com/ahmedk92/AnimationTechniques">code</a> if you don’t have the time.</p>
+
+<hr />
+
+<p>If you want to do custom drawing; that is, the kind of drawing that cannot be simply achieved by composing existing UIKit classes (e.g. UILabel, UIImageView, etc…), there are two main approaches to do that. Namely, there is the Core Graphics way, and the Core Animation way.</p>
+
+<p>If you tried to play with these before, you may have noticed that animating with Core Animation is easier (it’s in the name as you see). This is because you build your custom view using <code class="highlighter-rouge">CALayer</code> subclasses (<code class="highlighter-rouge">CAShapeLayer</code>, <code class="highlighter-rouge">CAGradientLayer</code>, etc..) that have animatable properties by default.
+So, it’s matter of utilizing the rich animation APIs Core Animation provides like <code class="highlighter-rouge">CABasicAnimation</code> and <code class="highlighter-rouge">CAKeyframeAnimation</code>.</p>
+
+<p>However, it’s not the case with the Core Graphics way. 
+Just as you override <code class="highlighter-rouge">draw(_:)</code>, you’ll draw how will your view look in a single frame, depending on what data your view has. There is no high-level component of your drawing that you can communicate with to change its state. All your drawing can be thought of (and essentially is) a single bitmap (think: like a png image).</p>
+
+<p>So, any change we want to do to our view, we change the necessary underlying data, then request our view to re-draw by calling <a href="https://developer.apple.com/documentation/uikit/uiview/1622437-setneedsdisplay">setNeedsDisplay()</a>. That’s it. There’s no other way.</p>
+
+<p>Perfect, now, how to animate such changes?</p>
+
+<p>We have to have at least a basic understanding of how a basic animation is done.</p>
+
+<p>What we consider as a smooth animation can be thought of a series of frames that gradually completes a story. Each frame shouldn’t provide so much change; or else we would lose the smoothness (called jankiness, jittery, jumpiness, stutter, etc..). These frames also should arrive quickly one after the other for the same purpose.
+For digital displays (computer monitors, mobile phones, etc..) sampling natural motion at a rate of 60 frames per second is considered ideal. We can drop to the 30s for acceptable results. We can go up to 120 too for luxury (as in the latest iPads). However, for most app uses-cases we deal with on a daily basis, 60 frames-per-second is our target.</p>
+
+<p>Out of this theory, we can come up with two requirements:</p>
+
+<ol>
+  <li>Our single frame shouldn’t take more time than 1/60 of a second to be made.</li>
+  <li>Even if we generate each frame under 1/60s, we still need to synchronize with the system’s refresh rate. That is, when does the system request our frame to be delivered.
+This because even if our frame is generated under 1/60s, beginning frame generation just at the end of the expected frame duration will probably exceed the duration requiring, causing the system to drop that frame entirely and come for the next frame instead. If this happens enough, we’ll again lose smoothness even that our drawing is fast. However, this is actually improbable with UIKit, as <code class="highlighter-rouge">setNeedsDisplay()</code> just marks the view to be re-drawn the next drawing cycle and not immediately.</li>
+</ol>
+
+<h2 id="enter-cadisplaylink">Enter CADisplayLink</h2>
+
+<p><a href="https://developer.apple.com/documentation/quartzcore/cadisplaylink"><code class="highlighter-rouge">CADisplayLink</code></a> does just that. From the docs:</p>
+
+<blockquote>
+  <p>A timer object that allows your application to synchronize its drawing to the refresh rate of the display.</p>
+</blockquote>
+
+<p>To answer our first question, how much do we have to render a frame we can compute that with the following:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">let</span> <span class="nv">frameDuration</span> <span class="o">=</span> <span class="n">displayLink</span><span class="o">.</span><span class="n">targetTimestamp</span> <span class="o">-</span> <span class="n">displayLink</span><span class="o">.</span><span class="n">timestamp</span>
+</code></pre></div></div>
+
+<p>To answer our second question, we only have to provide a callback function for the display link where we update our data and then call <code class="highlighter-rouge">setNeedsDisplay()</code>.</p>
+
+<p>What’s only left is how much we should change our data suitable to that time frame.
+This depends on your goal, but let’s have a simple example. 
+Assume we want to uniformly animate the stroke of a ring-like shape over 3 seconds.
+So, let’s have some idealistic assumptions, and do simple maths:</p>
+
+<ol>
+  <li>Assume the refresh rate along those whole 3 seconds is 60 FPS.</li>
+  <li>Assume all frames have equal durations.</li>
+</ol>
+
+<p>Now, since we agree that each second should have 60 frames, then our 3-second animation should have 3x60 frames = 180 frames.
+Therefore, the stroke percentage should increment by 1/180 of 360 degrees.
+So, the general formula can be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>current_frame_share = frame_duration / whole_animation_duration
+delta = current_frame_share * target_value
+current_value += delta
+</code></pre></div></div>
+
+<p>Applying this to our example:</p>
+
+<div class="language-swift highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">let</span> <span class="nv">displayLink</span> <span class="o">=</span> <span class="kt">CADisplayLink</span><span class="p">(</span><span class="nv">target</span><span class="p">:</span> <span class="n">target</span><span class="p">,</span> <span class="nv">selector</span><span class="p">:</span> <span class="kd">#selector(</span><span class="nf">update</span><span class="kd">)</span><span class="p">)</span>
+
+<span class="kd">@objc</span> <span class="kd">func</span> <span class="nf">update</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">guard</span> <span class="n">endAngle</span> <span class="o">&lt;</span> <span class="kt">TARGET_END_ANGLE</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">displayLink</span><span class="o">.</span><span class="nf">invalidate</span><span class="p">()</span>
+        <span class="k">return</span>
+    <span class="p">}</span>
+    
+    <span class="k">let</span> <span class="nv">frameDuration</span> <span class="o">=</span> <span class="n">displayLink</span><span class="o">.</span><span class="n">targetTimestamp</span> <span class="o">-</span> <span class="n">displayLink</span><span class="o">.</span><span class="n">timestamp</span>
+    <span class="k">let</span> <span class="nv">frameDurationShareOfTotalAnimationTime</span> <span class="o">=</span> <span class="n">frameDuration</span> <span class="o">/</span> <span class="kt">ANIMATION_DURATION</span>
+    <span class="k">let</span> <span class="nv">amountOfRadiansToIncrement</span> <span class="o">=</span> <span class="kt">CGFloat</span><span class="p">(</span><span class="n">frameDurationShareOfTotalAnimationTime</span><span class="p">)</span> <span class="o">*</span> <span class="kt">TARGET_END_ANGLE</span>
+    
+    <span class="n">endAngle</span> <span class="o">+=</span> <span class="n">amountOfRadiansToIncrement</span>
+    <span class="nf">setNeedsDisplay</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><a href="https://github.com/ahmedk92/AnimationTechniques">Full code</a>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>As you saw, you’re better off going the Core Animation way if you have animation in mind. Also notice that your maths can get rapidly more complex if the animation is not linear/uniform as in our example. That is, if you want ease-in or ease-out, you’ll have to figure how much frames at the start and the end of the animation will have different changes than the rest of the frames, and so on for different paces, which is easier with Core Animation with <a href="https://developer.apple.com/documentation/quartzcore/camediatimingfunction">timing functions</a>.</p>
+:ET
