@@ -7,8 +7,7 @@ date:   2020-05-23 12:29:00 +0200
 Skip directly to the [code](https://github.com/ahmedk92/AnimationTechniques) if you don't have the time.
 
 ___
-
-
+<br/>
 If you want to do custom drawing; that is, the kind of drawing that cannot be simply achieved by composing existing UIKit classes (e.g. UILabel, UIImageView, etc...), there are two main approaches to do that. Namely, there is the Core Graphics way, and the Core Animation way.
 
 If you tried to play with these before, you may have noticed that animating with Core Animation is easier (it's in the name as you see). This is because you build your custom view using `CALayer` subclasses (`CAShapeLayer`, `CAGradientLayer`, etc..) that have animatable properties by default.
