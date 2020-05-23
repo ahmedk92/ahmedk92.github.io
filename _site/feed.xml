@@ -5,8 +5,8 @@
     <description></description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Sun, 24 May 2020 00:56:21 +0200</pubDate>
-    <lastBuildDate>Sun, 24 May 2020 00:56:21 +0200</lastBuildDate>
+    <pubDate>Sun, 24 May 2020 00:57:33 +0200</pubDate>
+    <lastBuildDate>Sun, 24 May 2020 00:57:33 +0200</lastBuildDate>
     <generator>Jekyll v4.0.0</generator>
     
       <item>
@@ -18,7 +18,7 @@
 If you want to do custom drawing; that is, the kind of drawing that cannot be simply achieved by composing existing UIKit classes (e.g. UILabel, UIImageView, etc…), there are two main approaches to do that. Namely, there is the Core Graphics way, and the Core Animation way.&lt;/p&gt;
 
 &lt;p&gt;If you tried to play with these before, you may have noticed that animating with Core Animation is easier (it’s in the name as you see). This is because you build your custom view using &lt;code class=&quot;highlighter-rouge&quot;&gt;CALayer&lt;/code&gt; subclasses (&lt;code class=&quot;highlighter-rouge&quot;&gt;CAShapeLayer&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;CAGradientLayer&lt;/code&gt;, etc..) that have animatable properties by default.
-So, it’s matter of utilizing the rich animation APIs Core Animation provides like &lt;code class=&quot;highlighter-rouge&quot;&gt;CABasicAnimation&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;CAKeyframeAnimation&lt;/code&gt;.&lt;/p&gt;
+So, it’s a matter of utilizing the rich animation APIs Core Animation provides like &lt;code class=&quot;highlighter-rouge&quot;&gt;CABasicAnimation&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;CAKeyframeAnimation&lt;/code&gt;.&lt;/p&gt;
 
 &lt;p&gt;However, it’s not the case with the Core Graphics way. 
 Just as you override &lt;code class=&quot;highlighter-rouge&quot;&gt;draw(_:)&lt;/code&gt;, you’ll draw how will your view look in a single frame, depending on what data your view has. There is no high-level component of your drawing that you can communicate with to change its state. All your drawing can be thought of (and essentially is) a single bitmap (think: like a png image).&lt;/p&gt;
