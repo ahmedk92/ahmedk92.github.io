@@ -99,10 +99,10 @@ People behind tools such as Fastlane, Cocoapods, ...etc.
 - [Jacob Eiting](https://twitter.com/jeiting)
 
 ## Students
-Not belittling them of course, but despite their young age, they're incredibely talented.
+Not belittling them of course, but despite their young age, they're incredibly talented.
 
 - [Harshil Shah](https://twitter.com/HarshilShah1910)
-- [Patrick Palestra](https://twitter.com/BalestraPatrick)
+- [Patrick Balestra](https://twitter.com/BalestraPatrick)
 
 ## Aliens
 Reverse engineering wizardry and stuff I don't understand yet impressed with.
@@ -120,3 +120,6 @@ Reverse engineering wizardry and stuff I don't understand yet impressed with.
 - [Mostafa Abdellateef](https://twitter.com/mmabdellateef)
 - [Donny Wals](https://twitter.com/DonnyWals)
 - [Sarun](https://twitter.com/sarunw)
+
+## SwiftUI
+- [Majid Jabrayilov](https://twitter.com/mecid)
