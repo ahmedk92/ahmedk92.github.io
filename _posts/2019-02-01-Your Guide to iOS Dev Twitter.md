@@ -103,6 +103,7 @@ Not belittling them of course, but despite their young age, they're incredibly t
 
 - [Harshil Shah](https://twitter.com/HarshilShah1910)
 - [Patrick Balestra](https://twitter.com/BalestraPatrick)
+- [Brandon Williams](https://twitter.com/mbrandonw)
 
 ## Aliens
 Reverse engineering wizardry and stuff I don't understand yet impressed with.
