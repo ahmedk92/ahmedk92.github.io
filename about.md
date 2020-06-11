@@ -16,4 +16,3 @@ Here I write on mostly technical stuff. You can find me on:
 - [Twitter](https://twitter.com/ahmedkhalaf_92)
 - [GitHub](https://github.com/ahmedk92)
 - [ASKfm](https://ask.fm/ahmedkhalaf2)
-- [CuriousCat](https://curiouscat.me/ahmedkhalaf_92)
