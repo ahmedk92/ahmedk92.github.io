@@ -14,8 +14,8 @@ title: Blog
 #   Google search results) and in your feed.xml site description.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://ahmedk92.github.io" # the base hostname & protocol for your site
-twitter_username: ahmedkhalaf_92
-github_username:  ahmedk92
+#twitter_username: ahmedkhalaf_92
+#github_username:  ahmedk92
 
 # Build settings
 markdown: kramdown
